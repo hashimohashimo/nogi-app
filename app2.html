@@ -14,6 +14,18 @@ body {
   background:#f5f5f5;
 }
 
+/* ボタン高速化 */
+button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  min-height:40px;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+/* ヘッダー */
 .header {
   display:flex;
   align-items:center;
@@ -28,16 +40,8 @@ body {
   margin:0;
 }
 
-.header button {
-  width:40px;
-  height:40px;
-  font-size:18px;
-  border:none;
-  background:none;
-}
-
+/* 検索 */
 .search { padding:10px; }
-
 .search input {
   width:100%;
   padding:10px;
@@ -45,17 +49,7 @@ body {
   border:1px solid #ccc;
 }
 
-.filter {
-  display:flex;
-  gap:5px;
-  padding:0 10px;
-}
-
-.filter button {
-  flex:1;
-  padding:8px;
-}
-
+/* リスト */
 .list {
   display:flex;
   flex-direction:column;
@@ -66,22 +60,20 @@ body {
 .card {
   display:flex;
   align-items:center;
-  gap:6px;
+  gap:8px;
   background:#fff;
-  padding:8px;
+  padding:10px;
   border-radius:10px;
 }
 
 .title-area { flex:2; }
+.title { font-size:14px; font-weight:bold; }
+.sub { font-size:12px; color:#777; }
 
-.title { font-size:13px; font-weight:bold; }
-.sub { font-size:11px; color:#777; }
-
-.btn-area { display:flex; gap:4px; }
+.btn-area { display:flex; gap:8px; }
 
 .type-btn {
-  padding:4px;
-  font-size:11px;
+  padding:6px 10px;
   border-radius:6px;
 }
 
@@ -89,7 +81,6 @@ body {
 .not { background:#ddd; }
 
 .all-btn {
-  padding:4px 8px;
   background:#2196F3;
   color:#fff;
   border-radius:6px;
@@ -97,10 +88,10 @@ body {
 
 .action-area {
   display:flex;
-  gap:4px;
+  gap:6px;
 }
 
-/* サイド */
+/* サイドバー */
 #side {
   position:fixed;
   top:0;
@@ -158,14 +149,9 @@ body {
   <input id="search" placeholder="検索" oninput="render()">
 </div>
 
-<div class="filter">
-  <button onclick="setFilter('all')">全て</button>
-  <button onclick="setFilter('incomplete')">未コンプ</button>
-  <button onclick="setFilter('complete')">コンプ</button>
-</div>
-
 <div class="list" id="list"></div>
 
+<!-- サイド -->
 <div id="side"></div>
 <div id="overlay"></div>
 
@@ -208,7 +194,7 @@ function save(){
   localStorage.setItem("members",JSON.stringify(members));
 }
 
-/* ===== サイド ===== */
+/* ===== サイドバー ===== */
 
 function toggleMenu(){
   const open = side.style.left === "0px";
@@ -219,12 +205,13 @@ function toggleMenu(){
   }else{
     side.style.left = "0px";
     overlay.style.display = "block";
-    renderMenu();
+    renderMenu(); // ←重要
   }
 }
 
 overlay.onclick = toggleMenu;
 
+/* サイド中身 */
 function renderMenu(){
   let html = "<h3>メニュー</h3>";
 
@@ -247,7 +234,11 @@ function renderMenu(){
         have += Object.values(i.types).filter(v=>v).length;
       });
 
-      html += `<div onclick="selectMenu('${m}','${y}')">└ ${y} (${have}/${total})</div>`;
+      html += `
+        <div onclick="selectMenu('${m}','${y}')">
+          └ ${y} (${have}/${total})
+        </div>
+      `;
     });
   });
 
@@ -276,10 +267,7 @@ function toggleManage(){
   }
 }
 
-managePanel.addEventListener("click", (e)=>{
-  e.stopPropagation();
-});
-
+managePanel.addEventListener("click",(e)=>e.stopPropagation());
 manageOverlay.onclick = toggleManage;
 
 /* ===== メンバー ===== */
@@ -317,30 +305,30 @@ function addItem(){
       series:s,
       types:{ヨリ:0,チュウ:0,ヒキ:0}
     });
+
+    if(!members.includes(cb.value)){
+      members.push(cb.value);
+    }
   });
 
   save();
   render();
 }
 
-/* ===== CSV（ここが修正ポイント） ===== */
+/* ===== CSV ===== */
 
 function importCSV(){
-  const f = csv.files[0];
-  if(!f) return;
+  const f=csv.files[0];
+  if(!f)return;
 
-  const r = new FileReader();
+  const r=new FileReader();
 
-  r.onload = e => {
-    e.target.result.split("\n").forEach(l => {
+  r.onload=e=>{
+    e.target.result.split("\n").forEach(l=>{
+      let [n,y,s]=l.split(",");
+      if(!n||!y||!s)return;
 
-      let [n,y,s] = l.split(",");
-
-      if(!n || !y || !s) return;
-
-      n = n.trim();
-      y = y.trim();
-      s = s.trim();
+      n=n.trim(); y=y.trim(); s=s.trim();
 
       items.push({
         name:n,
@@ -349,11 +337,9 @@ function importCSV(){
         types:{ヨリ:0,チュウ:0,ヒキ:0}
       });
 
-      // ★ここが超重要（メンバー自動追加）
       if(!members.includes(n)){
         members.push(n);
       }
-
     });
 
     save();
@@ -361,6 +347,41 @@ function importCSV(){
   };
 
   r.readAsText(f);
+}
+
+/* ===== 表示 ===== */
+
+function render(){
+  let html="";
+
+  items.forEach((item,i)=>{
+
+    if(currentMember!=="all" && item.name!==currentMember) return;
+    if(currentYear!=="all" && item.year!==currentYear) return;
+
+    html+=`
+    <div class="card">
+      <div class="title-area">
+        <div class="title">${item.series}</div>
+        <div class="sub">${item.name} / ${item.year}</div>
+      </div>
+
+      <button onclick="toggleAll(${i})">全部</button>
+
+      <div class="btn-area">
+        <button class="${item.types.ヨリ?'have':'not'}" onclick="toggle(${i},'ヨリ')">ヨリ</button>
+        <button class="${item.types.チュウ?'have':'not'}" onclick="toggle(${i},'チュウ')">チュウ</button>
+        <button class="${item.types.ヒキ?'have':'not'}" onclick="toggle(${i},'ヒキ')">ヒキ</button>
+      </div>
+
+      <div class="action-area">
+        <button onclick="edit(${i})">✏️</button>
+        <button onclick="del(${i})">🗑</button>
+      </div>
+    </div>`;
+  });
+
+  list.innerHTML = html;
 }
 
 /* ===== 操作 ===== */
@@ -375,45 +396,6 @@ function toggleAll(i){
   items[i].types={ヨリ:v,チュウ:v,ヒキ:v};
   save();render();
 }
-
-/* ===== 表示 ===== */
-
-function render(){
-  list.innerHTML="";
-
-  items.forEach((item,i)=>{
-
-    if(currentMember!=="all" && item.name!==currentMember) return;
-    if(currentYear!=="all" && item.year!==currentYear) return;
-
-    list.innerHTML+=`
-      <div class="card">
-        <div class="title-area">
-          <div class="title">${item.series}</div>
-          <div class="sub">${item.name} / ${item.year}</div>
-        </div>
-
-        <button class="all-btn" onclick="toggleAll(${i})">全部</button>
-
-        <div class="btn-area">
-          ${btn(i,"ヨリ")}
-          ${btn(i,"チュウ")}
-          ${btn(i,"ヒキ")}
-        </div>
-
-        <div class="action-area">
-          <button onclick="edit(${i})">✏️</button>
-          <button onclick="del(${i})">🗑</button>
-        </div>
-      </div>`;
-  });
-}
-
-function btn(i,t){
-  return `<button class="type-btn ${items[i].types[t]?'have':'not'}" onclick="toggle(${i},'${t}')">${t}</button>`;
-}
-
-/* ===== 編集・削除 ===== */
 
 function edit(i){
   let y=prompt("年号",items[i].year);
@@ -433,8 +415,6 @@ function del(i){
   save();render();
 }
 
-/* ===== リセット ===== */
-
 function reset(){
   if(confirm("全部削除?")){
     items=[];
@@ -443,8 +423,6 @@ function reset(){
     render();
   }
 }
-
-function setFilter(f){}
 
 /* 初期 */
 render();
