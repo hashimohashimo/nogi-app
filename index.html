@@ -38,17 +38,14 @@ input, button {
   overflow: hidden;
 }
 
-.row {
-  display: flex;
-  justify-content: space-between;
+.title {
+  font-weight: bold;
+  font-size: 14px;
 }
 
-.series {
-  font-size: 12px;
-  color: #666;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.sub {
+  font-size: 11px;
+  color: #888;
 }
 
 .btn-group {
@@ -64,7 +61,6 @@ input, button {
 
 .have { background:#4CAF50; color:white; }
 .not { background:#ddd; }
-
 .all-btn { background:#2196F3; color:white; }
 
 #sideMenu {
@@ -99,6 +95,14 @@ input, button {
   text-align:center;
   font-weight:bold;
 }
+
+.member-check {
+  display:block;
+  background:#fff;
+  padding:8px;
+  margin:4px 0;
+  border-radius:8px;
+}
 </style>
 </head>
 
@@ -122,14 +126,29 @@ input, button {
 <button onclick="toggleManage()">⚙️ 管理メニュー</button>
 
 <div id="manageArea" style="display:none;">
+
   <input id="newMember" placeholder="メンバー追加">
   <button onclick="addMember()">メンバー登録</button>
 
-  <input id="name" placeholder="メンバー名">
+  <hr>
+
+  <input id="year" placeholder="年号（例：2025）">
   <input id="series" placeholder="シリーズ">
-  <button onclick="addItem()">追加</button>
+
+  <h3>対象メンバー選択</h3>
+  <div style="display:flex; gap:5px;">
+    <button onclick="selectAllMembers()">全選択</button>
+    <button onclick="clearAllMembers()">全解除</button>
+  </div>
+
+  <div id="memberCheckboxList"></div>
+
+  <button onclick="addItem()">選択メンバーに追加</button>
+
+  <hr>
 
   <h3>CSV取り込み</h3>
+  <p style="font-size:12px;">形式：メンバー名,年号,シリーズ</p>
   <input type="file" id="csvFile">
   <button onclick="importCSV()">CSV読み込み</button>
 
@@ -153,42 +172,48 @@ input, button {
 let items = JSON.parse(localStorage.getItem("items")) || [];
 let members = JSON.parse(localStorage.getItem("members")) || [];
 
-let currentMember="all";
-let currentYear="all";
-let currentFilter="all";
+let currentMember = "all";
+let currentYear = "all";
+let currentFilter = "all";
 
-function save(){ localStorage.setItem("items", JSON.stringify(items)); }
-function saveMembers(){ localStorage.setItem("members", JSON.stringify(members)); }
+function save(){
+  localStorage.setItem("items", JSON.stringify(items));
+}
+
+function saveMembers(){
+  localStorage.setItem("members", JSON.stringify(members));
+}
 
 function toggleManage(){
-  manageArea.style.display = manageArea.style.display==="none"?"block":"none";
+  manageArea.style.display = manageArea.style.display === "none" ? "block" : "none";
+  renderMemberCheckbox();
 }
 
 function toggleMenu(){
-  if(sideMenu.style.left==="0px"){
-    sideMenu.style.left="-250px";
-    overlay.style.display="none";
-    document.body.style.overflow="auto";
+  if(sideMenu.style.left === "0px"){
+    sideMenu.style.left = "-250px";
+    overlay.style.display = "none";
+    document.body.style.overflow = "auto";
   } else {
-    sideMenu.style.left="0px";
-    overlay.style.display="block";
-    document.body.style.overflow="hidden";
+    sideMenu.style.left = "0px";
+    overlay.style.display = "block";
+    document.body.style.overflow = "hidden";
     renderMenu();
   }
 }
 
 function renderMenu(){
-  let html = `<div onclick="selectFromMenu('all','all')">全体</div>`;
+  let html = `<div style="padding:8px;" onclick="selectFromMenu('all','all')">全体</div>`;
 
   members.forEach(m=>{
-    html += `<div style="font-weight:bold;">👤 ${m}</div>`;
+    html += `<div style="font-weight:bold; padding:8px 4px;">👤 ${m}</div>`;
 
     const yearList = [...new Set(
-      items.filter(i=>i.name===m).map(i=>i.year)
+      items.filter(i => i.name === m).map(i => i.year)
     )];
 
     yearList.forEach(y=>{
-      const target = items.filter(i=>i.name===m && i.year===y);
+      const target = items.filter(i => i.name === m && i.year === y);
 
       let total = target.length * 3;
       let have = 0;
@@ -198,43 +223,93 @@ function renderMenu(){
       });
 
       let text = `${y} (${have}/${total})`;
-      if(have===total && total>0) text+=" ✅";
+      if(have === total && total > 0) text += " ✅";
 
-      html += `<div style="padding-left:10px;" onclick="selectFromMenu('${m}','${y}')">
-        └ ${text}
-      </div>`;
+      html += `
+        <div style="padding:6px 0 6px 18px;"
+          onclick="selectFromMenu('${m}','${y}')">
+          └ ${text}
+        </div>
+      `;
     });
   });
 
   menuList.innerHTML = html;
 }
 
-function selectFromMenu(member, year){
+function selectFromMenu(member, yearValue){
   currentMember = member;
-  currentYear = year;
+  currentYear = yearValue;
   toggleMenu();
   render();
 }
 
 function addMember(){
-  const name = newMember.value.trim();
-  if(!name) return;
+  const m = newMember.value.trim();
+  if(!m) return;
 
-  if(!members.includes(name)){
-    members.push(name);
+  if(!members.includes(m)){
+    members.push(m);
     saveMembers();
-    render();
   }
+
+  newMember.value = "";
+  renderMemberCheckbox();
+  render();
+}
+
+function renderMemberCheckbox(){
+  let html = "";
+
+  members.forEach(m=>{
+    html += `
+      <label class="member-check">
+        <input type="checkbox" value="${m}">
+        ${m}
+      </label>
+    `;
+  });
+
+  memberCheckboxList.innerHTML = html;
+}
+
+function selectAllMembers(){
+  document.querySelectorAll("#memberCheckboxList input")
+    .forEach(cb => cb.checked = true);
+}
+
+function clearAllMembers(){
+  document.querySelectorAll("#memberCheckboxList input")
+    .forEach(cb => cb.checked = false);
 }
 
 function addItem(){
-  if(!name.value || !series.value) return;
+  const y = year.value.trim();
+  const s = series.value.trim();
 
-  items.push({
-    name:name.value,
-    year:"未設定",
-    series:series.value,
-    types:{ヨリ:false,チュウ:false,ヒキ:false}
+  if(!y || !s){
+    alert("年号とシリーズを入力して");
+    return;
+  }
+
+  const checked = document.querySelectorAll("#memberCheckboxList input:checked");
+
+  if(checked.length === 0){
+    alert("メンバーを選択して");
+    return;
+  }
+
+  checked.forEach(cb=>{
+    const m = cb.value;
+
+    if(!items.some(i => i.name === m && i.year === y && i.series === s)){
+      items.push({
+        name: m,
+        year: y,
+        series: s,
+        types:{ヨリ:false,チュウ:false,ヒキ:false}
+      });
+    }
   });
 
   save();
@@ -248,19 +323,21 @@ function importCSV(){
   const reader = new FileReader();
 
   reader.onload = function(e){
-    const rows = e.target.result.split("\n");
+    const rows = e.target.result.split(/\r?\n/);
 
     rows.forEach(r=>{
-      const [name, year, series] = r.split(",");
-      if(!name || !year || !series) return;
+      if(!r.trim()) return;
 
-      const m=name.trim();
-      const y=year.trim();
-      const s=series.trim();
+      const [name, yearValue, seriesValue] = r.split(",");
+      if(!name || !yearValue || !seriesValue) return;
+
+      const m = name.trim();
+      const y = yearValue.trim();
+      const s = seriesValue.trim();
 
       if(!members.includes(m)) members.push(m);
 
-      if(!items.some(i=>i.name===m && i.year===y && i.series===s)){
+      if(!items.some(i => i.name === m && i.year === y && i.series === s)){
         items.push({
           name:m,
           year:y,
@@ -272,6 +349,7 @@ function importCSV(){
 
     save();
     saveMembers();
+    renderMemberCheckbox();
     render();
   };
 
@@ -284,50 +362,58 @@ function setFilter(f){
 }
 
 function toggle(i,t){
-  items[i].types[t]=!items[i].types[t];
+  items[i].types[t] = !items[i].types[t];
   save();
   render();
 }
 
 function toggleAll(i){
-  const t=items[i].types;
-  const v=!(t.ヨリ&&t.チュウ&&t.ヒキ);
-  t.ヨリ=t.チュウ=t.ヒキ=v;
+  const t = items[i].types;
+  const v = !(t.ヨリ && t.チュウ && t.ヒキ);
+
+  t.ヨリ = v;
+  t.チュウ = v;
+  t.ヒキ = v;
+
   save();
   render();
 }
 
-// 🔥 編集
 function editItem(index){
   const item = items[index];
+
+  const newYear = prompt("年号", item.year);
+  if(!newYear) return;
 
   const newSeries = prompt("シリーズ名", item.series);
   if(!newSeries) return;
 
+  item.year = newYear.trim();
   item.series = newSeries.trim();
 
   save();
   render();
 }
 
-// 🔥 削除
 function deleteItem(index){
-  if(!confirm("削除する？")) return;
+  if(!confirm("このシリーズを削除する？")) return;
 
   items.splice(index,1);
   save();
   render();
 }
 
-// 🔥 全削除
 function resetData(){
-  if(!confirm("本当に削除する？")) return;
+  if(!confirm("本当にすべて削除する？")) return;
   if(!confirm("戻せません。本当にOK？")) return;
 
-  items=[];
-  members=[];
-  localStorage.clear();
+  items = [];
+  members = [];
 
+  localStorage.removeItem("items");
+  localStorage.removeItem("members");
+
+  renderMemberCheckbox();
   render();
 }
 
@@ -339,38 +425,41 @@ function renderTotalProgress(){
     have += Object.values(i.types).filter(v=>v).length;
   });
 
-  totalProgress.innerHTML = `全体進捗： ${have}/${total}`;
+  const rate = total ? Math.floor((have / total) * 100) : 0;
+
+  totalProgress.innerHTML = `全体進捗： ${have}/${total}（${rate}%）`;
 }
 
 function render(){
   renderTotalProgress();
-  list.innerHTML="";
+  list.innerHTML = "";
 
   const kw = search.value.toLowerCase();
 
   items.forEach((item,i)=>{
 
-    if(currentMember!=="all" && item.name!==currentMember) return;
-    if(currentYear!=="all" && item.year!==currentYear) return;
-    if(kw && !item.name.toLowerCase().includes(kw)) return;
+    if(currentMember !== "all" && item.name !== currentMember) return;
+    if(currentYear !== "all" && item.year !== currentYear) return;
+
+    if(kw &&
+      !item.name.toLowerCase().includes(kw) &&
+      !item.year.toLowerCase().includes(kw) &&
+      !item.series.toLowerCase().includes(kw)
+    ) return;
 
     const count = Object.values(item.types).filter(v=>v).length;
     const isComplete = count === 3;
 
-    if(currentFilter==="complete" && !isComplete) return;
-    if(currentFilter==="incomplete" && isComplete) return;
+    if(currentFilter === "complete" && !isComplete) return;
+    if(currentFilter === "incomplete" && isComplete) return;
 
-    list.innerHTML+=`
+    list.innerHTML += `
       <div class="card">
 
-       <div>
-  <div style="font-weight:bold; font-size:14px;">
-    ${item.series}
-  </div>
-  <div style="font-size:11px; color:#666;">
-    ${item.name}
-  </div>
-</div>
+        <div>
+          <div class="title">${item.series}</div>
+          <div class="sub">${item.name} / ${item.year}</div>
+        </div>
 
         <div class="btn-group">
           ${btn(i,"ヨリ",item.types.ヨリ)}
@@ -393,9 +482,10 @@ function render(){
 }
 
 function btn(i,t,on){
-  return `<button class="type-btn ${on?'have':'not'}" onclick="toggle(${i},'${t}')">${t}</button>`;
+  return `<button class="type-btn ${on ? 'have' : 'not'}" onclick="toggle(${i},'${t}')">${t}</button>`;
 }
 
+renderMemberCheckbox();
 render();
 </script>
 
