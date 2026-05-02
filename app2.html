@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>生写真管理</title>
 
-  
 <style>
 * { box-sizing: border-box; }
 
@@ -47,16 +46,6 @@ body {
   border:1px solid #ccc;
 }
 
-/* 進捗 */
-.progress {
-  background:#fff;
-  margin:10px;
-  padding:10px;
-  border-radius:10px;
-  text-align:center;
-  font-weight:bold;
-}
-
 /* フィルター */
 .filter {
   display:flex;
@@ -84,31 +73,12 @@ body {
   background:#fff;
   padding:8px;
   border-radius:10px;
-  touch-action:none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* 浮き */
-.dragging {
-  transform: scale(1.05) rotate(1deg);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-  z-index:1000;
-}
-
-/* ハンドル */
-.handle {
-  font-size:18px;
-  padding:0 6px;
-  cursor:grab;
-  user-select:none;
-}
-
-/* 左 */
 .title-area { flex:2; }
 .title { font-size:13px; font-weight:bold; }
 .sub { font-size:11px; color:#777; }
 
-/* ボタン */
 .btn-area { display:flex; gap:4px; }
 
 .type-btn {
@@ -127,17 +97,12 @@ body {
   border-radius:6px;
 }
 
-/* 編集削除 */
 .action-area {
   display:flex;
   gap:4px;
 }
-.action-area button {
-  padding:4px 6px;
-  font-size:11px;
-}
 
-/* サイド */
+/* サイドバー */
 #side {
   position:fixed;
   top:0;
@@ -147,18 +112,20 @@ body {
   background:#fff;
   overflow:auto;
   transition:.3s;
-  z-index:1000;
+  z-index:2000;
   padding:10px;
 }
 
+/* サイドoverlay */
 #overlay {
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.3);
   display:none;
+  z-index:1500;
 }
 
-/* 管理 */
+/* 管理メニュー */
 #managePanel {
   position:fixed;
   top:0;
@@ -169,13 +136,16 @@ body {
   padding:10px;
   overflow:auto;
   transition:.3s;
+  z-index:3000;
 }
 
+/* 管理overlay */
 #manageOverlay {
   position:fixed;
   inset:0;
   background:rgba(0,0,0,0.3);
   display:none;
+  z-index:2500;
 }
 </style>
 </head>
@@ -192,8 +162,6 @@ body {
   <input id="search" placeholder="検索" oninput="render()">
 </div>
 
-<div class="progress" id="progress"></div>
-
 <div class="filter">
   <button onclick="setFilter('all')">全て</button>
   <button onclick="setFilter('incomplete')">未コンプ</button>
@@ -202,9 +170,11 @@ body {
 
 <div class="list" id="list"></div>
 
+<!-- サイド -->
 <div id="side"></div>
-<div id="overlay" onclick="toggleMenu()"></div>
+<div id="overlay"></div>
 
+<!-- 管理 -->
 <div id="managePanel">
 <h3>管理</h3>
 
@@ -228,58 +198,140 @@ body {
 <button onclick="reset()" style="background:red;color:#fff;">全削除</button>
 </div>
 
-<div id="manageOverlay" onclick="toggleManage()"></div>
+<div id="manageOverlay"></div>
 
 <script>
 let items = JSON.parse(localStorage.getItem("items")||"[]");
 let members = JSON.parse(localStorage.getItem("members")||"[]");
 
-let touchIndex=null;
-let dragging=false;
+let currentMember="all";
+let currentYear="all";
 
+/* 保存 */
 function save(){
   localStorage.setItem("items",JSON.stringify(items));
   localStorage.setItem("members",JSON.stringify(members));
 }
 
-/* 表示 */
-function render(){
-  list.innerHTML="";
+/* ===== サイドバー ===== */
 
-  items.forEach((item,i)=>{
-    list.innerHTML+=`
-    <div class="card">
+function toggleMenu(){
+  const open = side.style.left === "0px";
 
-      <div class="handle">≡</div>
+  if(open){
+    side.style.left = "-260px";
+    overlay.style.display = "none";
+  }else{
+    side.style.left = "0px";
+    overlay.style.display = "block";
+    renderMenu(); // ←重要
+  }
+}
 
-      <div class="title-area">
-        <div class="title">${item.series}</div>
-        <div class="sub">${item.name} / ${item.year}</div>
-      </div>
+overlay.onclick = toggleMenu;
 
-      <button class="all-btn" onclick="toggleAll(${i})">全部</button>
+function renderMenu(){
+  let html = "<h3>メニュー</h3>";
 
-      <div class="btn-area">
-        ${btn(i,"ヨリ")}
-        ${btn(i,"チュウ")}
-        ${btn(i,"ヒキ")}
-      </div>
+  html += `<div onclick="selectMenu('all','all')">全体</div>`;
 
-      <div class="action-area">
-        <button onclick="edit(${i})">✏️</button>
-        <button onclick="del(${i})">🗑</button>
-      </div>
+  members.forEach(m=>{
+    html += `<div><b>${m}</b></div>`;
 
-    </div>`;
+    const years = [...new Set(
+      items.filter(i=>i.name===m).map(i=>i.year)
+    )];
+
+    years.forEach(y=>{
+      const target = items.filter(i=>i.name===m && i.year===y);
+
+      let total = target.length * 3;
+      let have = 0;
+
+      target.forEach(i=>{
+        have += Object.values(i.types).filter(v=>v).length;
+      });
+
+      html += `
+        <div onclick="selectMenu('${m}','${y}')">
+          └ ${y} (${have}/${total})
+        </div>
+      `;
+    });
   });
 
-  enableDrag();
+  side.innerHTML = html;
 }
 
-/* ボタン */
-function btn(i,t){
-  return `<button class="type-btn ${items[i].types[t]?'have':'not'}" onclick="toggle(${i},'${t}')">${t}</button>`;
+function selectMenu(m,y){
+  currentMember = m;
+  currentYear = y;
+  toggleMenu();
+  render();
 }
+
+/* ===== 管理メニュー ===== */
+
+function toggleManage(){
+  const open = managePanel.style.right === "0px";
+
+  if(open){
+    managePanel.style.right = "-320px";
+    manageOverlay.style.display = "none";
+  }else{
+    managePanel.style.right = "0px";
+    manageOverlay.style.display = "block";
+    renderMembers();
+  }
+}
+
+/* これが超重要 */
+managePanel.addEventListener("click", (e)=>{
+  e.stopPropagation();
+});
+
+manageOverlay.onclick = toggleManage;
+
+/* ===== メンバー ===== */
+
+function addMember(){
+  const m=newMember.value.trim();
+  if(!m)return;
+
+  if(!members.includes(m))members.push(m);
+
+  newMember.value="";
+  save();
+}
+
+function renderMembers(){
+  memberList.innerHTML="";
+  members.forEach(m=>{
+    memberList.innerHTML+=`
+      <label><input type="checkbox" value="${m}">${m}</label>`;
+  });
+}
+
+/* ===== 追加 ===== */
+
+function addItem(){
+  const y=year.value,s=series.value;
+  if(!y||!s)return;
+
+  document.querySelectorAll("#memberList input:checked").forEach(cb=>{
+    items.push({
+      name:cb.value,
+      year:y,
+      series:s,
+      types:{ヨリ:0,チュウ:0,ヒキ:0}
+    });
+  });
+
+  save();
+  render();
+}
+
+/* ===== 操作 ===== */
 
 function toggle(i,t){
   items[i].types[t]=!items[i].types[t];
@@ -292,51 +344,45 @@ function toggleAll(i){
   save();render();
 }
 
-/* 並び替え */
-function enableDrag(){
-  const cards=document.querySelectorAll(".card");
+/* ===== 表示 ===== */
 
-  cards.forEach((card,index)=>{
-    const handle=card.querySelector(".handle");
+function render(){
+  list.innerHTML="";
 
-    handle.addEventListener("touchstart",(e)=>{
-      e.stopPropagation();
-      touchIndex=index;
-      dragging=true;
-      card.classList.add("dragging");
-      navigator.vibrate?.(10);
-    });
+  items.forEach((item,i)=>{
 
-    handle.addEventListener("touchend",()=>{
-      dragging=false;
-      document.querySelectorAll(".card").forEach(c=>c.classList.remove("dragging"));
-    });
+    if(currentMember!=="all" && item.name!==currentMember)return;
+    if(currentYear!=="all" && item.year!==currentYear)return;
 
-    card.addEventListener("touchmove",(e)=>{
-      if(!dragging) return;
+    list.innerHTML+=`
+      <div class="card">
+        <div class="title-area">
+          <div class="title">${item.series}</div>
+          <div class="sub">${item.name} / ${item.year}</div>
+        </div>
 
-      e.preventDefault();
+        <button class="all-btn" onclick="toggleAll(${i})">全部</button>
 
-      const touch=e.touches[0];
-      const target=document.elementFromPoint(touch.clientX,touch.clientY);
-      const targetCard=target.closest(".card");
-      if(!targetCard)return;
+        <div class="btn-area">
+          ${btn(i,"ヨリ")}
+          ${btn(i,"チュウ")}
+          ${btn(i,"ヒキ")}
+        </div>
 
-      const arr=[...cards];
-      const targetIndex=arr.indexOf(targetCard);
-
-      if(targetIndex!==touchIndex){
-        const moved=items.splice(touchIndex,1)[0];
-        items.splice(targetIndex,0,moved);
-        touchIndex=targetIndex;
-        save();
-        render();
-      }
-    },{passive:false});
+        <div class="action-area">
+          <button onclick="edit(${i})">✏️</button>
+          <button onclick="del(${i})">🗑</button>
+        </div>
+      </div>`;
   });
 }
 
-/* 編集 */
+function btn(i,t){
+  return `<button class="type-btn ${items[i].types[t]?'have':'not'}" onclick="toggle(${i},'${t}')">${t}</button>`;
+}
+
+/* ===== 編集 ===== */
+
 function edit(i){
   let y=prompt("年号",items[i].year);
   if(y===null)return;
@@ -350,11 +396,52 @@ function edit(i){
   save();render();
 }
 
-/* 削除 */
+/* ===== 削除 ===== */
+
 function del(i){
   if(confirm("削除?")) items.splice(i,1);
   save();render();
 }
+
+/* ===== CSV ===== */
+
+function importCSV(){
+  const f=csv.files[0];
+  if(!f)return;
+
+  const r=new FileReader();
+  r.onload=e=>{
+    e.target.result.split("\n").forEach(l=>{
+      let [n,y,s]=l.split(",");
+      if(!n||!y||!s)return;
+
+      items.push({
+        name:n,
+        year:y,
+        series:s,
+        types:{ヨリ:0,チュウ:0,ヒキ:0}
+      });
+    });
+
+    save();
+    render();
+  };
+
+  r.readAsText(f);
+}
+
+/* ===== 全削除 ===== */
+
+function reset(){
+  if(confirm("全部削除?")){
+    items=[];
+    members=[];
+    save();
+    render();
+  }
+}
+
+function setFilter(f){}
 
 /* 初期 */
 render();
