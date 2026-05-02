@@ -14,7 +14,6 @@ body {
   background:#f5f5f5;
 }
 
-/* ヘッダー */
 .header {
   display:flex;
   align-items:center;
@@ -37,8 +36,8 @@ body {
   background:none;
 }
 
-/* 検索 */
 .search { padding:10px; }
+
 .search input {
   width:100%;
   padding:10px;
@@ -46,18 +45,17 @@ body {
   border:1px solid #ccc;
 }
 
-/* フィルター */
 .filter {
   display:flex;
   gap:5px;
   padding:0 10px;
 }
+
 .filter button {
   flex:1;
   padding:8px;
 }
 
-/* リスト */
 .list {
   display:flex;
   flex-direction:column;
@@ -65,7 +63,6 @@ body {
   padding:10px;
 }
 
-/* カード */
 .card {
   display:flex;
   align-items:center;
@@ -76,6 +73,7 @@ body {
 }
 
 .title-area { flex:2; }
+
 .title { font-size:13px; font-weight:bold; }
 .sub { font-size:11px; color:#777; }
 
@@ -102,7 +100,7 @@ body {
   gap:4px;
 }
 
-/* サイドバー */
+/* サイド */
 #side {
   position:fixed;
   top:0;
@@ -116,7 +114,6 @@ body {
   padding:10px;
 }
 
-/* サイドoverlay */
 #overlay {
   position:fixed;
   inset:0;
@@ -125,7 +122,7 @@ body {
   z-index:1500;
 }
 
-/* 管理メニュー */
+/* 管理 */
 #managePanel {
   position:fixed;
   top:0;
@@ -139,7 +136,6 @@ body {
   z-index:3000;
 }
 
-/* 管理overlay */
 #manageOverlay {
   position:fixed;
   inset:0;
@@ -170,7 +166,6 @@ body {
 
 <div class="list" id="list"></div>
 
-<!-- サイド -->
 <div id="side"></div>
 <div id="overlay"></div>
 
@@ -213,7 +208,7 @@ function save(){
   localStorage.setItem("members",JSON.stringify(members));
 }
 
-/* ===== サイドバー ===== */
+/* ===== サイド ===== */
 
 function toggleMenu(){
   const open = side.style.left === "0px";
@@ -224,7 +219,7 @@ function toggleMenu(){
   }else{
     side.style.left = "0px";
     overlay.style.display = "block";
-    renderMenu(); // ←重要
+    renderMenu();
   }
 }
 
@@ -252,11 +247,7 @@ function renderMenu(){
         have += Object.values(i.types).filter(v=>v).length;
       });
 
-      html += `
-        <div onclick="selectMenu('${m}','${y}')">
-          └ ${y} (${have}/${total})
-        </div>
-      `;
+      html += `<div onclick="selectMenu('${m}','${y}')">└ ${y} (${have}/${total})</div>`;
     });
   });
 
@@ -270,7 +261,7 @@ function selectMenu(m,y){
   render();
 }
 
-/* ===== 管理メニュー ===== */
+/* ===== 管理 ===== */
 
 function toggleManage(){
   const open = managePanel.style.right === "0px";
@@ -285,7 +276,6 @@ function toggleManage(){
   }
 }
 
-/* これが超重要 */
 managePanel.addEventListener("click", (e)=>{
   e.stopPropagation();
 });
@@ -315,7 +305,9 @@ function renderMembers(){
 /* ===== 追加 ===== */
 
 function addItem(){
-  const y=year.value,s=series.value;
+  const y=year.value.trim();
+  const s=series.value.trim();
+
   if(!y||!s)return;
 
   document.querySelectorAll("#memberList input:checked").forEach(cb=>{
@@ -329,6 +321,46 @@ function addItem(){
 
   save();
   render();
+}
+
+/* ===== CSV（ここが修正ポイント） ===== */
+
+function importCSV(){
+  const f = csv.files[0];
+  if(!f) return;
+
+  const r = new FileReader();
+
+  r.onload = e => {
+    e.target.result.split("\n").forEach(l => {
+
+      let [n,y,s] = l.split(",");
+
+      if(!n || !y || !s) return;
+
+      n = n.trim();
+      y = y.trim();
+      s = s.trim();
+
+      items.push({
+        name:n,
+        year:y,
+        series:s,
+        types:{ヨリ:0,チュウ:0,ヒキ:0}
+      });
+
+      // ★ここが超重要（メンバー自動追加）
+      if(!members.includes(n)){
+        members.push(n);
+      }
+
+    });
+
+    save();
+    render();
+  };
+
+  r.readAsText(f);
 }
 
 /* ===== 操作 ===== */
@@ -351,8 +383,8 @@ function render(){
 
   items.forEach((item,i)=>{
 
-    if(currentMember!=="all" && item.name!==currentMember)return;
-    if(currentYear!=="all" && item.year!==currentYear)return;
+    if(currentMember!=="all" && item.name!==currentMember) return;
+    if(currentYear!=="all" && item.year!==currentYear) return;
 
     list.innerHTML+=`
       <div class="card">
@@ -381,7 +413,7 @@ function btn(i,t){
   return `<button class="type-btn ${items[i].types[t]?'have':'not'}" onclick="toggle(${i},'${t}')">${t}</button>`;
 }
 
-/* ===== 編集 ===== */
+/* ===== 編集・削除 ===== */
 
 function edit(i){
   let y=prompt("年号",items[i].year);
@@ -396,41 +428,12 @@ function edit(i){
   save();render();
 }
 
-/* ===== 削除 ===== */
-
 function del(i){
   if(confirm("削除?")) items.splice(i,1);
   save();render();
 }
 
-/* ===== CSV ===== */
-
-function importCSV(){
-  const f=csv.files[0];
-  if(!f)return;
-
-  const r=new FileReader();
-  r.onload=e=>{
-    e.target.result.split("\n").forEach(l=>{
-      let [n,y,s]=l.split(",");
-      if(!n||!y||!s)return;
-
-      items.push({
-        name:n,
-        year:y,
-        series:s,
-        types:{ヨリ:0,チュウ:0,ヒキ:0}
-      });
-    });
-
-    save();
-    render();
-  };
-
-  r.readAsText(f);
-}
-
-/* ===== 全削除 ===== */
+/* ===== リセット ===== */
 
 function reset(){
   if(confirm("全部削除?")){
