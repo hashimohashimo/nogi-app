@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生写真管理</title>
+
+<style>
+body {
+  font-family: -apple-system;
+  margin:0;
+  padding:10px;
+  background:#f5f5f5;
+}
+
+input, button {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+.card {
+  background:white;
+  padding:8px;
+  border-radius:10px;
+}
+
+.btn-group {
+  display:flex;
+  gap:5px;
+}
+
+.type-btn {
+  flex:1;
+  padding:8px;
+  border-radius:6px;
+}
+
+.have { background:#4CAF50; color:white; }
+.not { background:#ddd; }
+
+.all-btn { background:#2196F3; color:white; }
+
+#sideMenu {
+  position:fixed;
+  top:0;
+  left:-250px;
+  width:250px;
+  height:100%;
+  background:white;
+  transition:0.3s;
+  z-index:1000;
+  padding:10px;
+}
+
+#overlay {
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.3);
+  display:none;
+  z-index:999;
+}
+
+#totalProgress {
+  background:#fff;
+  padding:10px;
+  border-radius:10px;
+  margin:10px 0;
+  text-align:center;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 上部 -->
+<div style="display:flex; align-items:center; gap:10px;">
+  <button onclick="toggleMenu()">☰</button>
+  <h2 style="margin:0;">生写真管理</h2>
+</div>
+
+<input id="search" placeholder="検索" oninput="render()">
+
+<div id="totalProgress"></div>
+
+<!-- フィルター -->
+<div style="display:flex; gap:5px; margin:10px 0;">
+  <button onclick="setFilter('all')">全て</button>
+  <button onclick="setFilter('incomplete')">未コンプ</button>
+  <button onclick="setFilter('complete')">コンプ</button>
+</div>
+
+<!-- 管理 -->
+<button onclick="toggleManage()">⚙️ 管理メニュー</button>
+
+<div id="manageArea" style="display:none;">
+  <input id="newMember" placeholder="メンバー追加">
+  <button onclick="addMember()">メンバー登録</button>
+
+  <input id="name" placeholder="メンバー名">
+  <input id="series" placeholder="生写真名">
+  <button onclick="addItem()">追加</button>
+
+  <h3>CSV取り込み</h3>
+  <input type="file" id="csvFile">
+  <button onclick="importCSV()">CSV読み込み</button>
+</div>
+
+<div id="list" class="grid"></div>
+
+<!-- サイドメニュー -->
+<div id="sideMenu">
+  <h3>メニュー</h3>
+  <div id="menuList"></div>
+</div>
+
+<div id="overlay" onclick="toggleMenu()"></div>
+
+<script>
+let items = JSON.parse(localStorage.getItem("items")) || [];
+let members = JSON.parse(localStorage.getItem("members")) || [];
+
+let currentMember = "all";
+let currentYear = "all";
+let currentFilter = "all";
+
+// 保存
+function save(){ localStorage.setItem("items", JSON.stringify(items)); }
+function saveMembers(){ localStorage.setItem("members", JSON.stringify(members)); }
+
+// 管理メニュー
+function toggleManage(){
+  manageArea.style.display = manageArea.style.display==="none"?"block":"none";
+}
+
+// メニュー
+function toggleMenu(){
+  if(sideMenu.style.left==="0px"){
+    sideMenu.style.left="-250px";
+    overlay.style.display="none";
+  }else{
+    sideMenu.style.left="0px";
+    overlay.style.display="block";
+    renderMenu();
+  }
+}
+
+// メニュー生成（ツリー）
+function renderMenu(){
+  let html = `<div onclick="selectFromMenu('all','all')">全体</div>`;
+
+  members.forEach(m=>{
+    html += `<div style="font-weight:bold;">👤 ${m}</div>`;
+
+    const seriesList = [...new Set(
+      items.filter(i=>i.name===m).map(i=>i.series)
+    )];
+
+    seriesList.forEach(s=>{
+      const target = items.filter(i=>i.name===m && i.series===s);
+
+      let total = target.length * 3;
+      let have = 0;
+
+      target.forEach(i=>{
+        have += Object.values(i.types).filter(v=>v).length;
+      });
+
+      let text = `${s} (${have}/${total})`;
+      if(have===total && total>0) text+=" ✅";
+
+      html += `<div style="padding-left:10px;"
+        onclick="selectFromMenu('${m}','${s}')">
+        └ ${text}
+      </div>`;
+    });
+  });
+
+  menuList.innerHTML = html;
+}
+
+// メニュー選択
+function selectFromMenu(member, series){
+  currentMember = member;
+  currentYear = series;
+  toggleMenu();
+  render();
+}
+
+// メンバー追加
+function addMember(){
+  const name = newMember.value.trim();
+  if(!name) return;
+
+  if(!members.includes(name)){
+    members.push(name);
+    saveMembers();
+    render();
+  }
+}
+
+// アイテム追加
+function addItem(){
+  if(!name.value || !series.value) return;
+
+  items.push({
+    name:name.value,
+    series:series.value,
+    types:{ヨリ:false,チュウ:false,ヒキ:false}
+  });
+
+  save();
+  render();
+}
+
+// CSV
+function importCSV(){
+  const file = csvFile.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(e){
+    const rows = e.target.result.split("\n");
+
+    rows.forEach(r=>{
+      const [name, series] = r.split(",");
+      if(!name || !series) return;
+
+      const m=name.trim();
+      const s=series.trim();
+
+      if(!members.includes(m)) members.push(m);
+
+      if(!items.some(i=>i.name===m && i.series===s)){
+        items.push({
+          name:m,
+          series:s,
+          types:{ヨリ:false,チュウ:false,ヒキ:false}
+        });
+      }
+    });
+
+    save();
+    saveMembers();
+    render();
+  };
+
+  reader.readAsText(file);
+}
+
+// フィルター
+function setFilter(f){
+  currentFilter = f;
+  render();
+}
+
+// トグル
+function toggle(i,t){
+  items[i].types[t]=!items[i].types[t];
+  save();
+  render();
+}
+
+function toggleAll(i){
+  const t=items[i].types;
+  const v=!(t.ヨリ&&t.チュウ&&t.ヒキ);
+  t.ヨリ=t.チュウ=t.ヒキ=v;
+  save();
+  render();
+}
+
+// 全体進捗
+function renderTotalProgress(){
+  let total = items.length * 3;
+  let have = 0;
+
+  items.forEach(i=>{
+    have += Object.values(i.types).filter(v=>v).length;
+  });
+
+  const rate = total ? Math.floor((have/total)*100) : 0;
+
+  totalProgress.innerHTML = `全体進捗： ${have}/${total}（${rate}%）`;
+}
+
+// 描画
+function render(){
+  renderTotalProgress();
+  list.innerHTML="";
+
+  const kw = search.value.toLowerCase();
+
+  items.forEach((item,i)=>{
+
+    if(currentMember!=="all" && item.name!==currentMember) return;
+    if(currentYear!=="all" && item.series!==currentYear) return;
+    if(kw && !item.name.toLowerCase().includes(kw)) return;
+
+    const count = Object.values(item.types).filter(v=>v).length;
+    const isComplete = count === 3;
+
+    if(currentFilter==="complete" && !isComplete) return;
+    if(currentFilter==="incomplete" && isComplete) return;
+
+    list.innerHTML+=`
+      <div class="card">
+        <b>${item.name}</b>
+
+        <div class="btn-group">
+          ${btn(i,"ヨリ",item.types.ヨリ)}
+          ${btn(i,"チュウ",item.types.チュウ)}
+          ${btn(i,"ヒキ",item.types.ヒキ)}
+        </div>
+
+        <div class="btn-group">
+          <button class="type-btn all-btn" onclick="toggleAll(${i})">全部</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function btn(i,t,on){
+  return `<button class="type-btn ${on?'have':'not'}" onclick="toggle(${i},'${t}')">${t}</button>`;
+}
+
+render();
+</script>
+
+</body>
+</html>
