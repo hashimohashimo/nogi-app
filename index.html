@@ -6,42 +6,60 @@
 <title>生写真管理</title>
 
 <style>
-body {
+* { box-sizing: border-box; }
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
   font-family: -apple-system;
-  margin:0;
-  padding:10px;
-  background:#f5f5f5;
+  margin: 0;
+  padding: 10px;
+  background: #f5f5f5;
 }
 
 input, button {
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
 
 .grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 10px;
 }
 
 .card {
-  background:white;
-  padding:8px;
-  border-radius:10px;
+  background: white;
+  padding: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.series {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn-group {
-  display:flex;
-  gap:5px;
+  display: flex;
+  gap: 5px;
 }
 
 .type-btn {
-  flex:1;
-  padding:8px;
-  border-radius:6px;
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
 }
 
 .have { background:#4CAF50; color:white; }
@@ -50,26 +68,27 @@ input, button {
 .all-btn { background:#2196F3; color:white; }
 
 #sideMenu {
-  position:fixed;
-  top:0;
-  left:-250px;
-  width:250px;
-  height:100%;
-  background:white;
-  transition:0.3s;
-  z-index:1000;
-  padding:10px;
+  position: fixed;
+  top: 0;
+  left: -250px;
+  width: 250px;
+  height: 100%;
+  background: white;
+  transition: left 0.25s ease;
+  z-index: 1000;
+  padding: 10px;
+  overflow-y: auto;
 }
 
 #overlay {
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.3);
-  display:none;
-  z-index:999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  display: none;
+  z-index: 999;
 }
 
 #totalProgress {
@@ -85,7 +104,6 @@ input, button {
 
 <body>
 
-<!-- 上部 -->
 <div style="display:flex; align-items:center; gap:10px;">
   <button onclick="toggleMenu()">☰</button>
   <h2 style="margin:0;">生写真管理</h2>
@@ -95,14 +113,12 @@ input, button {
 
 <div id="totalProgress"></div>
 
-<!-- フィルター -->
-<div style="display:flex; gap:5px; margin:10px 0;">
+<div style="display:flex; gap:5px;">
   <button onclick="setFilter('all')">全て</button>
   <button onclick="setFilter('incomplete')">未コンプ</button>
   <button onclick="setFilter('complete')">コンプ</button>
 </div>
 
-<!-- 管理 -->
 <button onclick="toggleManage()">⚙️ 管理メニュー</button>
 
 <div id="manageArea" style="display:none;">
@@ -110,17 +126,22 @@ input, button {
   <button onclick="addMember()">メンバー登録</button>
 
   <input id="name" placeholder="メンバー名">
-  <input id="series" placeholder="生写真名">
+  <input id="series" placeholder="シリーズ">
   <button onclick="addItem()">追加</button>
 
   <h3>CSV取り込み</h3>
   <input type="file" id="csvFile">
   <button onclick="importCSV()">CSV読み込み</button>
+
+  <hr>
+
+  <button onclick="resetData()" style="background:#e53935;color:white;font-weight:bold;">
+    🗑 データ全削除
+  </button>
 </div>
 
 <div id="list" class="grid"></div>
 
-<!-- サイドメニュー -->
 <div id="sideMenu">
   <h3>メニュー</h3>
   <div id="menuList"></div>
@@ -132,44 +153,42 @@ input, button {
 let items = JSON.parse(localStorage.getItem("items")) || [];
 let members = JSON.parse(localStorage.getItem("members")) || [];
 
-let currentMember = "all";
-let currentYear = "all";
-let currentFilter = "all";
+let currentMember="all";
+let currentYear="all";
+let currentFilter="all";
 
-// 保存
 function save(){ localStorage.setItem("items", JSON.stringify(items)); }
 function saveMembers(){ localStorage.setItem("members", JSON.stringify(members)); }
 
-// 管理メニュー
 function toggleManage(){
   manageArea.style.display = manageArea.style.display==="none"?"block":"none";
 }
 
-// メニュー
 function toggleMenu(){
   if(sideMenu.style.left==="0px"){
     sideMenu.style.left="-250px";
     overlay.style.display="none";
-  }else{
+    document.body.style.overflow="auto";
+  } else {
     sideMenu.style.left="0px";
     overlay.style.display="block";
+    document.body.style.overflow="hidden";
     renderMenu();
   }
 }
 
-// メニュー生成（ツリー）
 function renderMenu(){
   let html = `<div onclick="selectFromMenu('all','all')">全体</div>`;
 
   members.forEach(m=>{
     html += `<div style="font-weight:bold;">👤 ${m}</div>`;
 
-    const seriesList = [...new Set(
-      items.filter(i=>i.name===m).map(i=>i.series)
+    const yearList = [...new Set(
+      items.filter(i=>i.name===m).map(i=>i.year)
     )];
 
-    seriesList.forEach(s=>{
-      const target = items.filter(i=>i.name===m && i.series===s);
+    yearList.forEach(y=>{
+      const target = items.filter(i=>i.name===m && i.year===y);
 
       let total = target.length * 3;
       let have = 0;
@@ -178,11 +197,10 @@ function renderMenu(){
         have += Object.values(i.types).filter(v=>v).length;
       });
 
-      let text = `${s} (${have}/${total})`;
+      let text = `${y} (${have}/${total})`;
       if(have===total && total>0) text+=" ✅";
 
-      html += `<div style="padding-left:10px;"
-        onclick="selectFromMenu('${m}','${s}')">
+      html += `<div style="padding-left:10px;" onclick="selectFromMenu('${m}','${y}')">
         └ ${text}
       </div>`;
     });
@@ -191,15 +209,13 @@ function renderMenu(){
   menuList.innerHTML = html;
 }
 
-// メニュー選択
-function selectFromMenu(member, series){
+function selectFromMenu(member, year){
   currentMember = member;
-  currentYear = series;
+  currentYear = year;
   toggleMenu();
   render();
 }
 
-// メンバー追加
 function addMember(){
   const name = newMember.value.trim();
   if(!name) return;
@@ -211,12 +227,12 @@ function addMember(){
   }
 }
 
-// アイテム追加
 function addItem(){
   if(!name.value || !series.value) return;
 
   items.push({
     name:name.value,
+    year:"未設定",
     series:series.value,
     types:{ヨリ:false,チュウ:false,ヒキ:false}
   });
@@ -225,7 +241,6 @@ function addItem(){
   render();
 }
 
-// CSV
 function importCSV(){
   const file = csvFile.files[0];
   if(!file) return;
@@ -236,17 +251,19 @@ function importCSV(){
     const rows = e.target.result.split("\n");
 
     rows.forEach(r=>{
-      const [name, series] = r.split(",");
-      if(!name || !series) return;
+      const [name, year, series] = r.split(",");
+      if(!name || !year || !series) return;
 
       const m=name.trim();
+      const y=year.trim();
       const s=series.trim();
 
       if(!members.includes(m)) members.push(m);
 
-      if(!items.some(i=>i.name===m && i.series===s)){
+      if(!items.some(i=>i.name===m && i.year===y && i.series===s)){
         items.push({
           name:m,
+          year:y,
           series:s,
           types:{ヨリ:false,チュウ:false,ヒキ:false}
         });
@@ -261,13 +278,11 @@ function importCSV(){
   reader.readAsText(file);
 }
 
-// フィルター
 function setFilter(f){
   currentFilter = f;
   render();
 }
 
-// トグル
 function toggle(i,t){
   items[i].types[t]=!items[i].types[t];
   save();
@@ -282,7 +297,40 @@ function toggleAll(i){
   render();
 }
 
-// 全体進捗
+// 🔥 編集
+function editItem(index){
+  const item = items[index];
+
+  const newSeries = prompt("シリーズ名", item.series);
+  if(!newSeries) return;
+
+  item.series = newSeries.trim();
+
+  save();
+  render();
+}
+
+// 🔥 削除
+function deleteItem(index){
+  if(!confirm("削除する？")) return;
+
+  items.splice(index,1);
+  save();
+  render();
+}
+
+// 🔥 全削除
+function resetData(){
+  if(!confirm("本当に削除する？")) return;
+  if(!confirm("戻せません。本当にOK？")) return;
+
+  items=[];
+  members=[];
+  localStorage.clear();
+
+  render();
+}
+
 function renderTotalProgress(){
   let total = items.length * 3;
   let have = 0;
@@ -291,12 +339,9 @@ function renderTotalProgress(){
     have += Object.values(i.types).filter(v=>v).length;
   });
 
-  const rate = total ? Math.floor((have/total)*100) : 0;
-
-  totalProgress.innerHTML = `全体進捗： ${have}/${total}（${rate}%）`;
+  totalProgress.innerHTML = `全体進捗： ${have}/${total}`;
 }
 
-// 描画
 function render(){
   renderTotalProgress();
   list.innerHTML="";
@@ -306,7 +351,7 @@ function render(){
   items.forEach((item,i)=>{
 
     if(currentMember!=="all" && item.name!==currentMember) return;
-    if(currentYear!=="all" && item.series!==currentYear) return;
+    if(currentYear!=="all" && item.year!==currentYear) return;
     if(kw && !item.name.toLowerCase().includes(kw)) return;
 
     const count = Object.values(item.types).filter(v=>v).length;
@@ -317,7 +362,15 @@ function render(){
 
     list.innerHTML+=`
       <div class="card">
-        <b>${item.name}</b>
+
+       <div>
+  <div style="font-weight:bold; font-size:14px;">
+    ${item.series}
+  </div>
+  <div style="font-size:11px; color:#666;">
+    ${item.name}
+  </div>
+</div>
 
         <div class="btn-group">
           ${btn(i,"ヨリ",item.types.ヨリ)}
@@ -328,6 +381,12 @@ function render(){
         <div class="btn-group">
           <button class="type-btn all-btn" onclick="toggleAll(${i})">全部</button>
         </div>
+
+        <div class="btn-group">
+          <button onclick="editItem(${i})">✏️</button>
+          <button onclick="deleteItem(${i})">🗑</button>
+        </div>
+
       </div>
     `;
   });
