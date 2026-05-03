@@ -250,8 +250,8 @@ body {
 #managePanel {
   position:fixed;
   top:0;
-  right:-320px;
-  width:300px;
+  right:-330px;
+  width:320px;
   height:100%;
   background:#fff;
   padding:10px;
@@ -261,12 +261,19 @@ body {
 }
 
 #managePanel input,
+#managePanel textarea,
 #managePanel button {
   width:100%;
   padding:10px;
   margin:5px 0;
   border-radius:8px;
   border:1px solid #ccc;
+  font-family:inherit;
+}
+
+#managePanel textarea {
+  min-height:90px;
+  resize:vertical;
 }
 
 #managePanel button {
@@ -289,6 +296,87 @@ body {
   background:rgba(0,0,0,0.3);
   display:none;
   z-index:2500;
+}
+
+/* テンプレ管理 */
+.template-help {
+  font-size:12px;
+  color:#666;
+  background:#f7f7f7;
+  padding:8px;
+  border-radius:8px;
+  line-height:1.6;
+}
+
+.template-item {
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:8px;
+  margin:8px 0;
+  background:#fafafa;
+}
+
+.template-title {
+  font-weight:bold;
+  font-size:14px;
+  margin-bottom:6px;
+}
+
+.template-actions {
+  display:flex;
+  gap:6px;
+}
+
+.template-actions button {
+  width:50%;
+  padding:7px;
+  font-size:13px;
+}
+
+/* 出品テンプレ選択モーダル */
+#templateOverlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.35);
+  display:none;
+  z-index:3500;
+}
+
+#templateModal {
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
+  width:300px;
+  max-height:80vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:14px;
+  padding:14px;
+  display:none;
+  z-index:4000;
+  box-shadow:0 8px 30px rgba(0,0,0,0.25);
+}
+
+#templateModal h3 {
+  margin:4px 0 12px;
+  text-align:center;
+  font-size:18px;
+}
+
+#templateModal button {
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border-radius:10px;
+  border:1px solid #ccc;
+  background:#f7f7f7;
+  font-size:15px;
+}
+
+#templateModal .cancel-btn {
+  background:#eee;
+  color:#555;
 }
 
 @media (max-width:600px){
@@ -343,20 +431,53 @@ body {
 
   <hr>
 
+  <h3>出品テンプレ管理</h3>
+
+  <div class="template-help">
+    使える差し込み：<br>
+    {name} メンバー名<br>
+    {series} シリーズ名<br>
+    {generation} 期生<br>
+    {count} 個数<br>
+    {price} メルカリ金額<br>
+    {memo} メモ
+  </div>
+
+  <input id="templateName" placeholder="テンプレ名 例：新品・未使用">
+  <textarea id="templateTitle" placeholder="商品タイトル例：{name} {series} 缶バッジ"></textarea>
+  <textarea id="templateBody" placeholder="説明文例：乃木坂46 {name}&#10;{series} 缶バッジです。&#10;&#10;即購入可能です。"></textarea>
+
+  <button onclick="saveTemplate()">テンプレ保存</button>
+
+  <div id="templateList"></div>
+
+  <hr>
+
   <button onclick="reset()" class="danger">全削除</button>
 </div>
 
 <div id="manageOverlay" onclick="toggleManage()"></div>
+
+<div id="templateOverlay" onclick="closeTemplateModal()"></div>
+
+<div id="templateModal">
+  <h3>出品テンプレを選択</h3>
+  <div id="templateSelectList"></div>
+  <button class="cancel-btn" onclick="closeTemplateModal()">キャンセル</button>
+</div>
 
 <script>
 let items = JSON.parse(localStorage.getItem("items") || "[]");
 let members = JSON.parse(localStorage.getItem("members") || "[]");
 let openedSeries = JSON.parse(localStorage.getItem("openedSeries") || "{}");
 let openedGeneration = JSON.parse(localStorage.getItem("openedGeneration") || "{}");
+let listingTemplates = JSON.parse(localStorage.getItem("listingTemplates") || "[]");
 
 let currentMember = "all";
 let currentSeries = "all";
 let currentGeneration = "all";
+let listingTargetIndex = null;
+let editingTemplateIndex = null;
 
 /* 古いデータ補正 */
 items.forEach(item => {
@@ -365,15 +486,37 @@ items.forEach(item => {
   if(item.mercariPrice === undefined) item.mercariPrice = "";
 });
 
+/* 初期テンプレ */
+if(listingTemplates.length === 0){
+  listingTemplates = [
+    {
+      name:"新品・未使用",
+      title:"{name} {series} 缶バッジ",
+      body:"乃木坂46 {name}\n{series} 缶バッジです。\n\n新品・未使用品です。\n初期傷等を気にされる方はご遠慮ください。\n\n即購入可能です。"
+    },
+    {
+      name:"中古・目立った傷なし",
+      title:"{name} {series} 缶バッジ",
+      body:"乃木坂46 {name}\n{series} 缶バッジです。\n\n目立った傷はありませんが、一度人の手に渡ったものです。\n状態を細かく気にされる方はご遠慮ください。\n\n即購入可能です。"
+    },
+    {
+      name:"まとめ売り",
+      title:"乃木坂46 缶バッジ まとめ売り",
+      body:"乃木坂46の缶バッジまとめ売りです。\n\nバラ売り相談可能です。\n状態を細かく気にされる方はご遠慮ください。\n\n即購入可能です。"
+    }
+  ];
+}
+
 function save(){
   localStorage.setItem("items", JSON.stringify(items));
   localStorage.setItem("members", JSON.stringify(members));
   localStorage.setItem("openedSeries", JSON.stringify(openedSeries));
   localStorage.setItem("openedGeneration", JSON.stringify(openedGeneration));
+  localStorage.setItem("listingTemplates", JSON.stringify(listingTemplates));
 }
 
 function toggleMenu(){
-  managePanel.style.right = "-320px";
+  managePanel.style.right = "-330px";
   manageOverlay.style.display = "none";
 
   if(side.style.left === "0px"){
@@ -486,12 +629,13 @@ function toggleManage(){
   overlay.style.display = "none";
 
   if(managePanel.style.right === "0px"){
-    managePanel.style.right = "-320px";
+    managePanel.style.right = "-330px";
     manageOverlay.style.display = "none";
   }else{
     managePanel.style.right = "0px";
     manageOverlay.style.display = "block";
     renderMembers();
+    renderTemplates();
   }
 }
 
@@ -618,6 +762,7 @@ function render(){
           <button class="mercari-icon-btn" onclick="openMercari(${i})">
             <span class="mercari-logo-mark">m</span>
           </button>
+          <button class="small-action-btn" onclick="openListingTemplate(${i})">📤</button>
           <button class="small-action-btn" onclick="editItem(${i})">✏️</button>
           <button class="small-action-btn" onclick="deleteItem(${i})">🗑</button>
         </div>
@@ -635,6 +780,164 @@ function openMercari(i){
   window.open(url, "_blank");
 }
 
+/* 出品テンプレ選択 */
+function openListingTemplate(i){
+  listingTargetIndex = i;
+  renderTemplateSelectList();
+  templateOverlay.style.display = "block";
+  templateModal.style.display = "block";
+}
+
+function closeTemplateModal(){
+  listingTargetIndex = null;
+  templateOverlay.style.display = "none";
+  templateModal.style.display = "none";
+}
+
+function renderTemplateSelectList(){
+  if(listingTemplates.length === 0){
+    templateSelectList.innerHTML = `<p style="text-align:center;color:#666;">テンプレがありません</p>`;
+    return;
+  }
+
+  let html = "";
+
+  listingTemplates.forEach((t, index) => {
+    html += `
+      <button onclick="useListingTemplate(${index})">
+        ${escapeHTML(t.name)}
+      </button>
+    `;
+  });
+
+  templateSelectList.innerHTML = html;
+}
+
+function useListingTemplate(templateIndex){
+  if(listingTargetIndex === null) return;
+
+  const item = items[listingTargetIndex];
+  const template = listingTemplates[templateIndex];
+
+  const title = applyTemplate(template.title, item);
+  const body = applyTemplate(template.body, item);
+
+  const copyText =
+`${title}
+
+${body}`;
+
+  copyToClipboard(copyText);
+
+  closeTemplateModal();
+
+  alert("出品用タイトル・説明文をコピーしました。メルカリ出品画面を開きます。");
+
+  window.open("https://jp.mercari.com/sell", "_blank");
+}
+
+function applyTemplate(text, item){
+  return String(text || "")
+    .replaceAll("{name}", item.name || "")
+    .replaceAll("{series}", item.series || "")
+    .replaceAll("{generation}", item.generation || "")
+    .replaceAll("{count}", item.count ?? "")
+    .replaceAll("{price}", item.mercariPrice || "")
+    .replaceAll("{memo}", item.memo || "");
+}
+
+function copyToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(() => {
+      fallbackCopy(text);
+    });
+  }else{
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text){
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+}
+
+/* テンプレ管理 */
+function saveTemplate(){
+  const name = templateName.value.trim();
+  const title = templateTitle.value.trim();
+  const body = templateBody.value.trim();
+
+  if(!name || !title || !body){
+    alert("テンプレ名・タイトル・説明文を入力して");
+    return;
+  }
+
+  const data = { name, title, body };
+
+  if(editingTemplateIndex === null){
+    listingTemplates.push(data);
+  }else{
+    listingTemplates[editingTemplateIndex] = data;
+    editingTemplateIndex = null;
+  }
+
+  templateName.value = "";
+  templateTitle.value = "";
+  templateBody.value = "";
+
+  save();
+  renderTemplates();
+}
+
+function renderTemplates(){
+  if(listingTemplates.length === 0){
+    templateList.innerHTML = `<p style="font-size:12px;color:#666;">テンプレがありません</p>`;
+    return;
+  }
+
+  let html = "";
+
+  listingTemplates.forEach((t, index) => {
+    html += `
+      <div class="template-item">
+        <div class="template-title">${escapeHTML(t.name)}</div>
+        <div style="font-size:12px;color:#666;white-space:pre-wrap;">${escapeHTML(t.title)}</div>
+        <div class="template-actions">
+          <button onclick="editTemplate(${index})">編集</button>
+          <button onclick="deleteTemplate(${index})">削除</button>
+        </div>
+      </div>
+    `;
+  });
+
+  templateList.innerHTML = html;
+}
+
+function editTemplate(index){
+  const t = listingTemplates[index];
+
+  templateName.value = t.name;
+  templateTitle.value = t.title;
+  templateBody.value = t.body;
+
+  editingTemplateIndex = index;
+
+  alert("下の入力欄にテンプレを読み込みました。修正して「テンプレ保存」を押してください。");
+}
+
+function deleteTemplate(index){
+  if(!confirm("このテンプレを削除しますか？")) return;
+
+  listingTemplates.splice(index, 1);
+  save();
+  renderTemplates();
+}
+
+/* 編集 */
 function editItem(i){
   const item = items[i];
 
@@ -724,17 +1027,6 @@ function importCSV(){
       let memo = "";
 
       if(index === 0 && line.includes("メンバー")) return;
-
-      /*
-        新形式：
-        メンバー名,シリーズ名,期生,個数,メルカリ金額,メモ
-
-        1つ前の形式：
-        メンバー名,シリーズ名,期生,個数,メモ
-
-        旧形式：
-        メンバー名,シリーズ名,個数,メモ
-      */
 
       n = (cols[0] || "").trim();
       s = (cols[1] || "").trim();
