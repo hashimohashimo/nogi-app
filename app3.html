@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>生写真管理</title>
+<title>缶バッジ管理</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -239,7 +239,7 @@ body {
 
 <div class="header">
   <button onclick="toggleMenu()">☰</button>
-  <h2>生写真管理</h2>
+  <h2>缶バッジ管理</h2>
   <button onclick="toggleManage()">⚙️</button>
 </div>
 
@@ -655,7 +655,7 @@ function makeCSVFileName(){
   const h = String(now.getHours()).padStart(2, "0");
   const min = String(now.getMinutes()).padStart(2, "0");
 
-  return `生写真管理_${y}${m}${d}_${h}${min}.csv`;
+  return `缶バッジ管理_${y}${m}${d}_${h}${min}.csv`;
 }
 
 /* CSV出力用エスケープ */
