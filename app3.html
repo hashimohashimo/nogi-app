@@ -11,7 +11,7 @@
 body {
   margin:0;
   font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  background:#f5f5f5;
+  background:#efe3ff;
   overflow-x:hidden;
 }
 
@@ -49,6 +49,20 @@ body {
   background:#fff;
   padding:10px;
   border-radius:12px;
+}
+
+.name-row {
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.member-color-icon {
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  border:1px solid #999;
+  flex-shrink:0;
 }
 
 .title {
@@ -225,6 +239,17 @@ body {
   gap:8px;
 }
 
+.side-member-name {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.side-member-name span:last-child {
+  word-break:break-word;
+}
+
 .side-member-row:hover,
 .side-row:hover,
 .series-name:hover,
@@ -286,7 +311,9 @@ body {
 }
 
 .member-check {
-  display:block;
+  display:flex;
+  align-items:center;
+  gap:6px;
   padding:5px 0;
 }
 
@@ -467,6 +494,53 @@ body {
 </div>
 
 <script>
+/* =============================
+   メンバーカラー設定
+============================= */
+const memberColors = {
+  "伊藤理々杏": ["#800080", "#ff0000"],
+  "岩本蓮加": ["#ff69b4", "#ff0000"],
+  "梅澤美波": ["#0000ff", "#87cefa"],
+  "吉田綾乃クリスティー": ["#800080", "#ff69b4"],
+
+  "遠藤さくら": ["#ffffff", "#ff69b4"],
+  "賀喜遥香": ["#ffa500", "#008000"],
+  "金川紗耶": ["#ff0000", "#87cefa"],
+  "黒見明香": ["#800080", "#008000"],
+  "佐藤璃果": ["#ff69b4", "#40e0d0"],
+  "柴田柚菜": ["#0000ff", "#9acd32"],
+  "田村真佑": ["#800080", "#87cefa"],
+  "筒井あやめ": ["#800080", "#800080"],
+  "林瑠奈": ["#ff69b4", "#ff69b4"],
+  "松尾美佑": ["#40e0d0", "#ffffff"],
+  "矢久保美緒": ["#ffff00", "#ff69b4"],
+  "弓木奈於": ["#ff0000", "#9acd32"],
+
+  "五百城茉央": ["#40e0d0", "#0000ff"],
+  "池田瑛紗": ["#ffffff", "#008000"],
+  "一ノ瀬美空": ["#87cefa", "#87cefa"],
+  "井上和": ["#ffffff", "#ff0000"],
+  "岡本姫奈": ["#800080", "#0000ff"],
+  "小川彩": ["#ffffff", "#ffffff"],
+  "奥田いろは": ["#ff69b4", "#9acd32"],
+  "川﨑桜": ["#ff69b4", "#008000"],
+  "菅原咲月": ["#ff69b4", "#87cefa"],
+  "冨里奈央": ["#40e0d0", "#40e0d0"],
+  "中西アルノ": ["#40e0d0", "#87cefa"],
+
+  "愛宕心響": ["#ff69b4", "#0000ff"],
+  "大越ひなの": ["#ffffff", "#ffff00"],
+  "小津玲奈": ["#800080", "#40e0d0"],
+  "海邉朱莉": ["#0000ff", "#ff0000"],
+  "川端晃菜": ["#008000", "#87cefa"],
+  "鈴木佑捺": ["#ffffff", "#87cefa"],
+  "瀬戸口心月": ["#0000ff", "#ffff00"],
+  "長嶋凛桜": ["#ff69b4", "#ffa500"],
+  "増田三莉音": ["#0000ff", "#0000ff"],
+  "森平麗心": ["#ffff00", "#ffff00"],
+  "矢田萌華": ["#ffffff", "#800080"]
+};
+
 let items = JSON.parse(localStorage.getItem("items") || "[]");
 let members = JSON.parse(localStorage.getItem("members") || "[]");
 let openedSeries = JSON.parse(localStorage.getItem("openedSeries") || "{}");
@@ -513,6 +587,17 @@ function save(){
   localStorage.setItem("openedSeries", JSON.stringify(openedSeries));
   localStorage.setItem("openedGeneration", JSON.stringify(openedGeneration));
   localStorage.setItem("listingTemplates", JSON.stringify(listingTemplates));
+}
+
+function getMemberColorIcon(name){
+  const colors = memberColors[name] || ["#dddddd", "#999999"];
+
+  return `
+    <span
+      class="member-color-icon"
+      style="background:linear-gradient(90deg, ${colors[0]} 0%, ${colors[0]} 50%, ${colors[1]} 50%, ${colors[1]} 100%);"
+    ></span>
+  `;
 }
 
 function toggleMenu(){
@@ -591,7 +676,11 @@ function renderMenu(){
           genItems.forEach(item => {
             html += `
               <div class="side-member-row" onclick="selectMenu('${escapeText(item.name)}','${escapeText(item.series)}','${escapeText(item.generation || "未設定")}')">
-                <span>└ ${escapeHTML(item.name)}</span>
+                <span class="side-member-name">
+                  <span>└</span>
+                  ${getMemberColorIcon(item.name)}
+                  <span>${escapeHTML(item.name)}</span>
+                </span>
                 <span class="member-count">${item.count}</span>
               </div>
             `;
@@ -658,7 +747,9 @@ function renderMembers(){
   members.forEach(m => {
     memberList.innerHTML += `
       <label class="member-check">
-        <input type="checkbox" value="${escapeHTML(m)}"> ${escapeHTML(m)}
+        <input type="checkbox" value="${escapeHTML(m)}">
+        ${getMemberColorIcon(m)}
+        <span>${escapeHTML(m)}</span>
       </label>
     `;
   });
@@ -738,7 +829,11 @@ function render(){
 
     list.innerHTML += `
       <div class="card">
-        <div class="title">${escapeHTML(item.name)}</div>
+        <div class="name-row">
+          ${getMemberColorIcon(item.name)}
+          <div class="title">${escapeHTML(item.name)}</div>
+        </div>
+
         <div class="sub">${escapeHTML(item.series)} / ${escapeHTML(gen)}</div>
 
         <div class="counter-box">
@@ -780,7 +875,6 @@ function openMercari(i){
   window.open(url, "_blank");
 }
 
-/* 出品テンプレ選択 */
 function openListingTemplate(i){
   listingTargetIndex = i;
   renderTemplateSelectList();
@@ -865,7 +959,6 @@ function fallbackCopy(text){
   document.body.removeChild(textarea);
 }
 
-/* テンプレ管理 */
 function saveTemplate(){
   const name = templateName.value.trim();
   const title = templateTitle.value.trim();
@@ -937,7 +1030,6 @@ function deleteTemplate(index){
   renderTemplates();
 }
 
-/* 編集 */
 function editItem(i){
   const item = items[i];
 
@@ -1003,7 +1095,6 @@ function deleteItem(i){
   if(side.style.left === "0px") renderMenu();
 }
 
-/* CSV読み込み */
 function importCSV(){
   const f = csv.files[0];
   if(!f) return;
@@ -1100,7 +1191,6 @@ function importCSV(){
   r.readAsText(f);
 }
 
-/* CSV書き出し */
 function exportCSV(){
   if(items.length === 0){
     alert("書き出すデータがありません");
