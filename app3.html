@@ -58,11 +58,14 @@ body {
 }
 
 .member-color-icon {
-  width:15px;
-  height:15px;
+  width:15px !important;
+  height:15px !important;
+  min-width:15px !important;
+  max-width:15px !important;
   border-radius:50%;
   border:1px solid #999;
-  flex-shrink:0;
+  flex:0 0 15px !important;
+  display:inline-block;
 }
 
 .title {
@@ -310,11 +313,40 @@ body {
   color:#fff;
 }
 
+/* メンバー選択リスト */
 .member-check {
   display:flex;
   align-items:center;
-  gap:6px;
-  padding:5px 0;
+  gap:8px;
+  padding:8px 4px;
+  width:100%;
+  font-size:16px;
+  line-height:1.3;
+}
+
+.member-check input {
+  width:18px !important;
+  height:18px !important;
+  min-width:18px !important;
+  max-width:18px !important;
+  margin:0 !important;
+  padding:0 !important;
+  flex:0 0 18px !important;
+}
+
+.member-check .member-color-icon {
+  width:15px !important;
+  height:15px !important;
+  min-width:15px !important;
+  max-width:15px !important;
+  border-radius:50%;
+  flex:0 0 15px !important;
+}
+
+.member-name-text {
+  flex:1;
+  min-width:0;
+  word-break:keep-all;
 }
 
 #manageOverlay {
@@ -494,9 +526,6 @@ body {
 </div>
 
 <script>
-/* =============================
-   メンバーカラー設定
-============================= */
 const memberColors = {
   "伊藤理々杏": ["#800080", "#ff0000"],
   "岩本蓮加": ["#ff69b4", "#ff0000"],
@@ -553,14 +582,12 @@ let currentGeneration = "all";
 let listingTargetIndex = null;
 let editingTemplateIndex = null;
 
-/* 古いデータ補正 */
 items.forEach(item => {
   if(item.memo === undefined) item.memo = "";
   if(item.generation === undefined) item.generation = "未設定";
   if(item.mercariPrice === undefined) item.mercariPrice = "";
 });
 
-/* 初期テンプレ */
 if(listingTemplates.length === 0){
   listingTemplates = [
     {
@@ -749,7 +776,7 @@ function renderMembers(){
       <label class="member-check">
         <input type="checkbox" value="${escapeHTML(m)}">
         ${getMemberColorIcon(m)}
-        <span>${escapeHTML(m)}</span>
+        <span class="member-name-text">${escapeHTML(m)}</span>
       </label>
     `;
   });
@@ -868,10 +895,8 @@ function render(){
 
 function openMercari(i){
   const item = items[i];
-
   const keyword = `${item.name} ${item.series} 缶バッジ`;
   const url = "https://jp.mercari.com/search?keyword=" + encodeURIComponent(keyword);
-
   window.open(url, "_blank");
 }
 
