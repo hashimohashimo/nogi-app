@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生写真管理</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin:0;
+  font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background:#f5f5f5;
+}
+
+/* ヘッダー */
+.header {
+  display:flex;
+  align-items:center;
+  padding:10px;
+  background:#fff;
+  border-bottom:1px solid #ddd;
+}
+
+.header h2 {
+  flex:1;
+  text-align:center;
+  margin:0;
+  font-size:20px;
+}
+
+.header button {
+  width:40px;
+  height:40px;
+  font-size:18px;
+  border:none;
+  background:none;
+}
+
+/* カード一覧 */
+.list {
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+  padding:10px;
+}
+
+.card {
+  background:#fff;
+  padding:10px;
+  border-radius:12px;
+}
+
+.title {
+  font-size:13px;
+  font-weight:bold;
+}
+
+.sub {
+  font-size:11px;
+  color:#777;
+}
+
+/* 個数 */
+.counter-box {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin-top:8px;
+}
+
+.counter-box button {
+  width:32px;
+  height:32px;
+  font-size:16px;
+}
+
+.counter-box b {
+  min-width:20px;
+  text-align:center;
+}
+
+/* カード内 編集・削除 */
+.card-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:6px;
+  margin-top:8px;
+}
+
+.card-actions button {
+  width:30px;
+  height:28px;
+  font-size:13px;
+  padding:0;
+  border-radius:6px;
+  border:1px solid #ccc;
+  background:#f2f2f2;
+}
+
+/* サイドバー */
+#side {
+  position:fixed;
+  top:0;
+  left:-300px;
+  width:300px;
+  height:100%;
+  background:#fff;
+  overflow:auto;
+  transition:.3s;
+  padding:14px;
+  z-index:2000;
+}
+
+#side h3 {
+  font-size:26px;
+  margin:20px 0 28px;
+}
+
+.side-row {
+  padding:8px 0;
+  cursor:pointer;
+  font-size:18px;
+}
+
+.side-series-row {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  margin-top:18px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.tree-icon {
+  width:24px;
+  cursor:pointer;
+  user-select:none;
+}
+
+.series-name {
+  flex:1;
+  cursor:pointer;
+}
+
+.side-member-row {
+  padding:8px 0 8px 30px;
+  font-size:18px;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+}
+
+.side-member-row:hover,
+.side-row:hover,
+.series-name:hover {
+  background:#eee;
+}
+
+.member-count {
+  font-weight:bold;
+  min-width:24px;
+  text-align:right;
+}
+
+#overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.3);
+  display:none;
+  z-index:1500;
+}
+
+/* 管理メニュー */
+#managePanel {
+  position:fixed;
+  top:0;
+  right:-320px;
+  width:300px;
+  height:100%;
+  background:#fff;
+  padding:10px;
+  overflow:auto;
+  transition:.3s;
+  z-index:3000;
+}
+
+#managePanel input,
+#managePanel button {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+#manageOverlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.3);
+  display:none;
+  z-index:2500;
+}
+
+.member-check {
+  display:block;
+  padding:5px 0;
+}
+
+/* スマホ */
+@media (max-width:600px){
+  .list {
+    grid-template-columns:repeat(2, 1fr);
+  }
+
+  #side {
+    width:300px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <button onclick="toggleMenu()">☰</button>
+  <h2>生写真管理</h2>
+  <button onclick="toggleManage()">⚙️</button>
+</div>
+
+<div class="list" id="list"></div>
+
+<!-- サイドバー -->
+<div id="side"></div>
+<div id="overlay" onclick="toggleMenu()"></div>
+
+<!-- 管理メニュー -->
+<div id="managePanel">
+  <h3>管理</h3>
+
+  <input id="newMember" placeholder="メンバー追加">
+  <button onclick="addMember()">メンバー登録</button>
+
+  <hr>
+
+  <input id="series" placeholder="シリーズ名">
+
+  <div id="memberList"></div>
+
+  <button onclick="addItem()">選択メンバーに追加</button>
+
+  <hr>
+
+  <p style="font-size:12px;">CSV形式：メンバー名,シリーズ名</p>
+  <input type="file" id="csv">
+  <button onclick="importCSV()">CSV読み込み</button>
+
+  <hr>
+
+  <button onclick="reset()" style="background:red;color:#fff;">全削除</button>
+</div>
+
+<div id="manageOverlay" onclick="toggleManage()"></div>
+
+<script>
+let items = JSON.parse(localStorage.getItem("items") || "[]");
+let members = JSON.parse(localStorage.getItem("members") || "[]");
+let openedSeries = JSON.parse(localStorage.getItem("openedSeries") || "{}");
+
+let currentMember = "all";
+let currentSeries = "all";
+
+/* 保存 */
+function save(){
+  localStorage.setItem("items", JSON.stringify(items));
+  localStorage.setItem("members", JSON.stringify(members));
+  localStorage.setItem("openedSeries", JSON.stringify(openedSeries));
+}
+
+/* サイドバー開閉 */
+function toggleMenu(){
+  managePanel.style.right = "-320px";
+  manageOverlay.style.display = "none";
+
+  if(side.style.left === "0px"){
+    side.style.left = "-300px";
+    overlay.style.display = "none";
+  }else{
+    side.style.left = "0px";
+    overlay.style.display = "block";
+    renderMenu();
+  }
+}
+
+/* サイドバー描画 */
+function renderMenu(){
+  let html = "<h3>メニュー</h3>";
+
+  html += `
+    <div class="side-row" onclick="selectMenu('all','all')">
+      全体
+    </div>
+  `;
+
+  const seriesList = [...new Set(items.map(i => i.series))];
+
+  seriesList.forEach(s => {
+    const safeSeries = escapeText(s);
+    const isOpen = openedSeries[s] !== false;
+
+    html += `
+      <div class="side-series-row">
+        <div class="tree-icon" onclick="event.stopPropagation(); toggleSeriesTree('${safeSeries}')">
+          ${isOpen ? "▼" : "▶"}
+        </div>
+
+        <div class="series-name" onclick="selectMenu('all','${safeSeries}')">
+          ${s}
+        </div>
+      </div>
+    `;
+
+    if(isOpen){
+      const seriesItems = items.filter(i => i.series === s);
+
+      seriesItems.forEach(item => {
+        html += `
+          <div class="side-member-row" onclick="selectMenu('${escapeText(item.name)}','${escapeText(item.series)}')">
+            <span>└ ${item.name}</span>
+            <span class="member-count">${item.count}</span>
+          </div>
+        `;
+      });
+    }
+  });
+
+  side.innerHTML = html;
+}
+
+/* ツリー開閉 */
+function toggleSeriesTree(seriesName){
+  openedSeries[seriesName] = openedSeries[seriesName] === false ? true : false;
+  save();
+  renderMenu();
+}
+
+/* シングルクォート対策 */
+function escapeText(text){
+  return String(text).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+/* サイドバー選択 */
+function selectMenu(m, s){
+  currentMember = m;
+  currentSeries = s;
+  toggleMenu();
+  render();
+}
+
+/* 管理メニュー開閉 */
+function toggleManage(){
+  side.style.left = "-300px";
+  overlay.style.display = "none";
+
+  if(managePanel.style.right === "0px"){
+    managePanel.style.right = "-320px";
+    manageOverlay.style.display = "none";
+  }else{
+    managePanel.style.right = "0px";
+    manageOverlay.style.display = "block";
+    renderMembers();
+  }
+}
+
+/* メンバー追加 */
+function addMember(){
+  const m = newMember.value.trim();
+  if(!m) return;
+
+  if(!members.includes(m)){
+    members.push(m);
+  }
+
+  newMember.value = "";
+  save();
+  renderMembers();
+}
+
+/* 管理メニュー内メンバー一覧 */
+function renderMembers(){
+  memberList.innerHTML = "";
+
+  members.forEach(m => {
+    memberList.innerHTML += `
+      <label class="member-check">
+        <input type="checkbox" value="${m}"> ${m}
+      </label>
+    `;
+  });
+}
+
+/* シリーズ追加 */
+function addItem(){
+  const s = series.value.trim();
+  if(!s) return;
+
+  const checked = document.querySelectorAll("#memberList input:checked");
+
+  if(checked.length === 0){
+    alert("メンバーを選択して");
+    return;
+  }
+
+  checked.forEach(cb => {
+    const m = cb.value;
+
+    if(!items.some(i => i.name === m && i.series === s)){
+      items.push({
+        name:m,
+        series:s,
+        count:0
+      });
+    }
+  });
+
+  if(openedSeries[s] === undefined){
+    openedSeries[s] = true;
+  }
+
+  save();
+  render();
+}
+
+/* カウント変更 */
+function changeCount(i, d){
+  items[i].count += d;
+
+  if(items[i].count < 0){
+    items[i].count = 0;
+  }
+
+  save();
+  render();
+
+  if(side.style.left === "0px"){
+    renderMenu();
+  }
+}
+
+/* メイン表示 */
+function render(){
+  list.innerHTML = "";
+
+  items.forEach((item, i) => {
+
+    if(currentMember !== "all" && item.name !== currentMember) return;
+    if(currentSeries !== "all" && item.series !== currentSeries) return;
+
+    list.innerHTML += `
+      <div class="card">
+        <div class="title">${item.series}</div>
+        <div class="sub">${item.name}</div>
+
+        <div class="counter-box">
+          <button onclick="changeCount(${i},-1)">−</button>
+          <b>${item.count}</b>
+          <button onclick="changeCount(${i},1)">＋</button>
+        </div>
+
+        <div class="card-actions">
+          <button onclick="editItem(${i})">✏️</button>
+          <button onclick="deleteItem(${i})">🗑</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+/* 編集 */
+function editItem(i){
+  const item = items[i];
+
+  const newName = prompt("メンバー名", item.name);
+  if(newName === null) return;
+
+  const newSeries = prompt("シリーズ名", item.series);
+  if(newSeries === null) return;
+
+  if(!newName.trim() || !newSeries.trim()){
+    alert("空欄は使えません");
+    return;
+  }
+
+  const oldName = item.name;
+
+  item.name = newName.trim();
+  item.series = newSeries.trim();
+
+  if(!members.includes(item.name)){
+    members.push(item.name);
+  }
+
+  const stillExists = items.some(x => x.name === oldName);
+  if(!stillExists){
+    members = members.filter(x => x !== oldName);
+  }
+
+  if(openedSeries[item.series] === undefined){
+    openedSeries[item.series] = true;
+  }
+
+  save();
+  render();
+}
+
+/* 削除 */
+function deleteItem(i){
+  if(!confirm("このデータを削除しますか？")) return;
+
+  const oldName = items[i].name;
+
+  items.splice(i, 1);
+
+  const stillExists = items.some(x => x.name === oldName);
+  if(!stillExists){
+    members = members.filter(x => x !== oldName);
+  }
+
+  save();
+  render();
+}
+
+/* CSV */
+function importCSV(){
+  const f = csv.files[0];
+  if(!f) return;
+
+  const r = new FileReader();
+
+  r.onload = e => {
+    e.target.result.split(/\r?\n/).forEach(l => {
+      let [n, s] = l.split(",");
+      if(!n || !s) return;
+
+      n = n.trim();
+      s = s.trim();
+
+      if(!members.includes(n)){
+        members.push(n);
+      }
+
+      if(!items.some(i => i.name === n && i.series === s)){
+        items.push({
+          name:n,
+          series:s,
+          count:0
+        });
+      }
+
+      if(openedSeries[s] === undefined){
+        openedSeries[s] = true;
+      }
+    });
+
+    save();
+    render();
+  };
+
+  r.readAsText(f);
+}
+
+/* 全削除 */
+function reset(){
+  if(!confirm("全部削除しますか？")) return;
+  if(!confirm("元に戻せません。本当に削除しますか？")) return;
+
+  items = [];
+  members = [];
+  openedSeries = {};
+
+  save();
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>
