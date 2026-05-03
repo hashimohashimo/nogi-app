@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>缶バッジ</title>
+<title>生写真管理</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -12,6 +12,7 @@ body {
   margin:0;
   font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   background:#f5f5f5;
+  overflow-x:hidden;
 }
 
 /* ヘッダー */
@@ -55,6 +56,7 @@ body {
 .title {
   font-size:13px;
   font-weight:bold;
+  word-break:break-word;
 }
 
 .sub {
@@ -143,6 +145,7 @@ body {
 .series-name {
   flex:1;
   cursor:pointer;
+  word-break:break-word;
 }
 
 .side-member-row {
@@ -197,17 +200,26 @@ body {
   border:1px solid #ccc;
 }
 
+#managePanel button {
+  background:#f5f5f5;
+}
+
+#managePanel .danger {
+  background:red;
+  color:#fff;
+}
+
+.member-check {
+  display:block;
+  padding:5px 0;
+}
+
 #manageOverlay {
   position:fixed;
   inset:0;
   background:rgba(0,0,0,0.3);
   display:none;
   z-index:2500;
-}
-
-.member-check {
-  display:block;
-  padding:5px 0;
 }
 
 /* スマホ */
@@ -227,7 +239,7 @@ body {
 
 <div class="header">
   <button onclick="toggleMenu()">☰</button>
-  <h2>缶バッジ管理</h2>
+  <h2>生写真管理</h2>
   <button onclick="toggleManage()">⚙️</button>
 </div>
 
@@ -254,13 +266,17 @@ body {
 
   <hr>
 
-  <p style="font-size:12px;">CSV形式：メンバー名,シリーズ名</p>
-  <input type="file" id="csv">
+  <p style="font-size:12px;">
+    CSV形式：メンバー名,シリーズ名,個数
+  </p>
+
+  <input type="file" id="csv" accept=".csv,text/csv">
   <button onclick="importCSV()">CSV読み込み</button>
+  <button onclick="exportCSV()">CSV書き出し</button>
 
   <hr>
 
-  <button onclick="reset()" style="background:red;color:#fff;">全削除</button>
+  <button onclick="reset()" class="danger">全削除</button>
 </div>
 
 <div id="manageOverlay" onclick="toggleManage()"></div>
@@ -318,7 +334,7 @@ function renderMenu(){
         </div>
 
         <div class="series-name" onclick="selectMenu('all','${safeSeries}')">
-          ${s}
+          ${escapeHTML(s)}
         </div>
       </div>
     `;
@@ -329,7 +345,7 @@ function renderMenu(){
       seriesItems.forEach(item => {
         html += `
           <div class="side-member-row" onclick="selectMenu('${escapeText(item.name)}','${escapeText(item.series)}')">
-            <span>└ ${item.name}</span>
+            <span>└ ${escapeHTML(item.name)}</span>
             <span class="member-count">${item.count}</span>
           </div>
         `;
@@ -345,11 +361,6 @@ function toggleSeriesTree(seriesName){
   openedSeries[seriesName] = openedSeries[seriesName] === false ? true : false;
   save();
   renderMenu();
-}
-
-/* シングルクォート対策 */
-function escapeText(text){
-  return String(text).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
 /* サイドバー選択 */
@@ -396,7 +407,7 @@ function renderMembers(){
   members.forEach(m => {
     memberList.innerHTML += `
       <label class="member-check">
-        <input type="checkbox" value="${m}"> ${m}
+        <input type="checkbox" value="${escapeHTML(m)}"> ${escapeHTML(m)}
       </label>
     `;
   });
@@ -432,6 +443,7 @@ function addItem(){
 
   save();
   render();
+  renderMembers();
 }
 
 /* カウント変更 */
@@ -455,14 +467,13 @@ function render(){
   list.innerHTML = "";
 
   items.forEach((item, i) => {
-
     if(currentMember !== "all" && item.name !== currentMember) return;
     if(currentSeries !== "all" && item.series !== currentSeries) return;
 
     list.innerHTML += `
       <div class="card">
-        <div class="title">${item.series}</div>
-        <div class="sub">${item.name}</div>
+        <div class="title">${escapeHTML(item.series)}</div>
+        <div class="sub">${escapeHTML(item.name)}</div>
 
         <div class="counter-box">
           <button onclick="changeCount(${i},-1)">−</button>
@@ -514,6 +525,10 @@ function editItem(i){
 
   save();
   render();
+
+  if(side.style.left === "0px"){
+    renderMenu();
+  }
 }
 
 /* 削除 */
@@ -531,9 +546,13 @@ function deleteItem(i){
 
   save();
   render();
+
+  if(side.style.left === "0px"){
+    renderMenu();
+  }
 }
 
-/* CSV */
+/* CSV読み込み */
 function importCSV(){
   const f = csv.files[0];
   if(!f) return;
@@ -541,22 +560,36 @@ function importCSV(){
   const r = new FileReader();
 
   r.onload = e => {
-    e.target.result.split(/\r?\n/).forEach(l => {
-      let [n, s] = l.split(",");
-      if(!n || !s) return;
+    const lines = e.target.result.split(/\r?\n/);
 
-      n = n.trim();
-      s = s.trim();
+    lines.forEach((line, index) => {
+      if(!line.trim()) return;
+
+      const cols = parseCSVLine(line);
+      if(cols.length < 2) return;
+
+      let n = cols[0].trim();
+      let s = cols[1].trim();
+      let c = cols[2] !== undefined ? Number(cols[2].trim()) : 0;
+
+      if(index === 0 && (n.includes("メンバー") || s.includes("シリーズ"))) return;
+
+      if(!n || !s) return;
+      if(isNaN(c) || c < 0) c = 0;
 
       if(!members.includes(n)){
         members.push(n);
       }
 
-      if(!items.some(i => i.name === n && i.series === s)){
+      const existing = items.find(i => i.name === n && i.series === s);
+
+      if(existing){
+        existing.count = c;
+      }else{
         items.push({
           name:n,
           series:s,
-          count:0
+          count:c
         });
       }
 
@@ -567,9 +600,118 @@ function importCSV(){
 
     save();
     render();
+
+    if(side.style.left === "0px"){
+      renderMenu();
+    }
+
+    alert("CSVを読み込みました");
   };
 
   r.readAsText(f);
+}
+
+/* CSV書き出し */
+function exportCSV(){
+  if(items.length === 0){
+    alert("書き出すデータがありません");
+    return;
+  }
+
+  let csvText = "メンバー名,シリーズ名,個数\n";
+
+  items.forEach(item => {
+    csvText += [
+      escapeCSV(item.name),
+      escapeCSV(item.series),
+      item.count
+    ].join(",") + "\n";
+  });
+
+  const blob = new Blob(["\uFEFF" + csvText], {
+    type: "text/csv;charset=utf-8;"
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = makeCSVFileName();
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
+
+/* CSVファイル名 */
+function makeCSVFileName(){
+  const now = new Date();
+
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const h = String(now.getHours()).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+
+  return `生写真管理_${y}${m}${d}_${h}${min}.csv`;
+}
+
+/* CSV出力用エスケープ */
+function escapeCSV(value){
+  value = String(value ?? "");
+
+  if(value.includes(",") || value.includes('"') || value.includes("\n")){
+    value = '"' + value.replace(/"/g, '""') + '"';
+  }
+
+  return value;
+}
+
+/* CSV 1行パース */
+function parseCSVLine(line){
+  const result = [];
+  let current = "";
+  let inQuotes = false;
+
+  for(let i = 0; i < line.length; i++){
+    const ch = line[i];
+
+    if(ch === '"'){
+      if(inQuotes && line[i + 1] === '"'){
+        current += '"';
+        i++;
+      }else{
+        inQuotes = !inQuotes;
+      }
+    }else if(ch === "," && !inQuotes){
+      result.push(current);
+      current = "";
+    }else{
+      current += ch;
+    }
+  }
+
+  result.push(current);
+  return result;
+}
+
+/* JS文字列用 */
+function escapeText(text){
+  return String(text)
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'");
+}
+
+/* HTML表示用 */
+function escapeHTML(text){
+  return String(text ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 /* 全削除 */
@@ -583,6 +725,10 @@ function reset(){
 
   save();
   render();
+
+  if(side.style.left === "0px"){
+    renderMenu();
+  }
 }
 
 render();
