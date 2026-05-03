@@ -2,12 +2,27 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>缶バッジ管理</title>
 
 <style>
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-x: none;
+}
+
+button,
+input,
+textarea,
+select {
+  touch-action: manipulation;
+  font-size: 16px;
 }
 
 body {
@@ -1073,7 +1088,7 @@ function render() {
           class="price-input"
           type="number"
           inputmode="numeric"
-          placeholder="メルカリ金額"
+          placeholder=""
           value="${escapeHTML(item.mercariPrice || "")}"
           oninput="updateMercariPrice(${i}, this.value)"
         >
@@ -1528,6 +1543,24 @@ function reset() {
 
   if (side.style.left === "0px") renderMenu();
 }
+
+
+// iPhoneのピンチ拡大・ダブルタップ拡大対策
+document.addEventListener("gesturestart", function(e) {
+  e.preventDefault();
+});
+
+let lastTouchEnd = 0;
+
+document.addEventListener("touchend", function(e) {
+  const now = Date.now();
+
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+
+  lastTouchEnd = now;
+}, { passive: false });
 
 fixSavedData();
 render();
