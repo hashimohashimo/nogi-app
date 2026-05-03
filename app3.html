@@ -6,445 +6,477 @@
 <title>缶バッジ管理</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
-  margin:0;
-  font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  background:#efe3ff;
-  overflow-x:hidden;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: #efe3ff;
+  overflow-x: hidden;
 }
 
 .header {
-  display:flex;
-  align-items:center;
-  padding:10px;
-  background:#fff;
-  border-bottom:1px solid #ddd;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
 }
 
 .header h2 {
-  flex:1;
-  text-align:center;
-  margin:0;
-  font-size:20px;
+  flex: 1;
+  text-align: center;
+  margin: 0;
+  font-size: 20px;
 }
 
 .header button {
-  width:40px;
-  height:40px;
-  font-size:18px;
-  border:none;
-  background:none;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  border: none;
+  background: none;
 }
 
 .list {
-  display:grid;
-  grid-template-columns:repeat(3, 1fr);
-  gap:10px;
-  padding:10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px;
 }
 
 .card {
-  background:#fff;
-  padding:10px;
-  border-radius:12px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 12px;
 }
 
 .name-row {
-  display:flex;
-  align-items:center;
-  gap:6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .member-color-icon {
-  width:15px !important;
-  height:15px !important;
-  min-width:15px !important;
-  max-width:15px !important;
-  border-radius:50%;
-  border:1px solid #999;
-  flex:0 0 15px !important;
-  display:inline-block;
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  max-width: 15px !important;
+  border-radius: 50%;
+  border: 1px solid #999;
+  flex: 0 0 15px !important;
+  display: inline-block;
 }
 
 .title {
-  font-size:13px;
-  font-weight:bold;
-  word-break:break-word;
+  font-size: 13px;
+  font-weight: bold;
+  word-break: break-word;
 }
 
 .sub {
-  font-size:11px;
-  color:#777;
-  margin-top:3px;
+  font-size: 11px;
+  color: #777;
+  margin-top: 3px;
 }
 
 .memo {
-  font-size:11px;
-  color:#444;
-  background:#f3f3f3;
-  border-radius:6px;
-  padding:5px;
-  margin-top:6px;
-  word-break:break-word;
+  font-size: 11px;
+  color: #444;
+  background: #f3f3f3;
+  border-radius: 6px;
+  padding: 5px;
+  margin-top: 6px;
+  word-break: break-word;
 }
 
 .counter-box {
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:10px;
-  margin-top:8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
 }
 
 .counter-box button {
-  width:32px;
-  height:32px;
-  font-size:16px;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
 }
 
 .counter-box b {
-  min-width:20px;
-  text-align:center;
+  min-width: 20px;
+  text-align: center;
 }
 
 .price-input {
-  width:100%;
-  margin-top:8px;
-  padding:7px;
-  font-size:13px;
-  border:1px solid #ccc;
-  border-radius:6px;
-  text-align:center;
-  background:#fff;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  background: #fff;
 }
 
 .card-actions {
-  display:flex;
-  justify-content:flex-end;
-  gap:6px;
-  margin-top:8px;
-  flex-wrap:wrap;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
 }
 
 .card-actions button {
-  height:28px;
-  font-size:13px;
-  padding:0;
-  border-radius:6px;
-  border:1px solid #ccc;
-  background:#f2f2f2;
+  height: 28px;
+  font-size: 13px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: #f2f2f2;
 }
 
 .mercari-icon-btn {
-  width:30px !important;
-  height:28px !important;
-  padding:0 !important;
-  border-radius:6px !important;
-  border:1px solid #ccc !important;
-  background:#fff !important;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  width: 30px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+  border: 1px solid #ccc !important;
+  background: #fff !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mercari-logo-mark {
-  width:17px;
-  height:17px;
-  border-radius:5px;
-  background:linear-gradient(135deg, #35c5f4 0%, #35c5f4 48%, #ff5a5f 48%, #ff5a5f 100%);
-  color:#fff;
-  font-size:11px;
-  font-weight:bold;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  line-height:1;
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #35c5f4 0%, #35c5f4 48%, #ff5a5f 48%, #ff5a5f 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .small-action-btn {
-  width:30px;
-  height:28px;
+  width: 30px;
+  height: 28px;
 }
 
 /* サイドバー */
 #side {
-  position:fixed;
-  top:0;
-  left:-320px;
-  width:320px;
-  height:100%;
-  background:#fff;
-  overflow:auto;
-  transition:.3s;
-  padding:14px;
-  z-index:2000;
+  position: fixed;
+  top: 0;
+  left: -320px;
+  width: 320px;
+  height: 100%;
+  background: #fff;
+  overflow: auto;
+  transition: .3s;
+  padding: 14px;
+  z-index: 2000;
 }
 
 #side h3 {
-  font-size:26px;
-  margin:20px 0 28px;
+  font-size: 26px;
+  margin: 20px 0 28px;
 }
 
 .side-row {
-  padding:8px 0;
-  cursor:pointer;
-  font-size:18px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 18px;
 }
 
 .side-series-row {
-  display:flex;
-  align-items:center;
-  gap:6px;
-  margin-top:18px;
-  font-size:20px;
-  font-weight:bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .side-generation-row {
-  display:flex;
-  align-items:center;
-  gap:6px;
-  padding:8px 0 4px 22px;
-  font-size:18px;
-  font-weight:bold;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 4px 22px;
+  font-size: 18px;
+  font-weight: bold;
 }
 
 .tree-icon {
-  width:24px;
-  cursor:pointer;
-  user-select:none;
+  width: 24px;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
 }
 
 .series-name,
 .generation-name {
-  flex:1;
-  cursor:pointer;
-  word-break:break-word;
+  flex: 1;
+  cursor: pointer;
+  word-break: break-word;
 }
 
 .series-total,
 .generation-total {
-  font-size:16px;
-  font-weight:bold;
-  color:#333;
-  min-width:36px;
-  text-align:right;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  min-width: 36px;
+  text-align: right;
 }
 
 .side-member-row {
-  padding:8px 0 8px 52px;
-  font-size:18px;
-  cursor:pointer;
-  display:flex;
-  justify-content:space-between;
-  gap:8px;
+  padding: 8px 0 8px 52px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .side-member-name {
-  display:flex;
-  align-items:center;
-  gap:6px;
-  min-width:0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .side-member-name span:last-child {
-  word-break:break-word;
+  word-break: break-word;
 }
 
 .side-member-row:hover,
 .side-row:hover,
 .series-name:hover,
 .generation-name:hover {
-  background:#eee;
+  background: #eee;
 }
 
 .member-count {
-  font-weight:bold;
-  min-width:24px;
-  text-align:right;
+  font-weight: bold;
+  min-width: 24px;
+  text-align: right;
 }
 
 #overlay {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.3);
-  display:none;
-  z-index:1500;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.3);
+  display: none;
+  z-index: 1500;
 }
 
 /* 管理メニュー */
 #managePanel {
-  position:fixed;
-  top:0;
-  right:-330px;
-  width:320px;
-  height:100%;
-  background:#fff;
-  padding:10px;
-  overflow:auto;
-  transition:.3s;
-  z-index:3000;
+  position: fixed;
+  top: 0;
+  right: -330px;
+  width: 320px;
+  height: 100%;
+  background: #fff;
+  padding: 10px;
+  overflow: auto;
+  transition: .3s;
+  z-index: 3000;
 }
 
 #managePanel input,
 #managePanel textarea,
 #managePanel button {
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border-radius:8px;
-  border:1px solid #ccc;
-  font-family:inherit;
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-family: inherit;
 }
 
 #managePanel textarea {
-  min-height:90px;
-  resize:vertical;
+  min-height: 90px;
+  resize: vertical;
 }
 
 #managePanel button {
-  background:#f5f5f5;
+  background: #f5f5f5;
 }
 
 #managePanel .danger {
-  background:red;
-  color:#fff;
+  background: red;
+  color: #fff;
 }
 
-/* メンバー選択リスト */
-.member-check {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 4px;
-  width:100%;
-  font-size:16px;
-  line-height:1.3;
+/* 管理メニューのメンバー選択 */
+.manage-generation-block {
+  margin: 10px 0 6px;
 }
 
-.member-check input {
-  width:18px !important;
-  height:18px !important;
-  min-width:18px !important;
-  max-width:18px !important;
-  margin:0 !important;
-  padding:0 !important;
-  flex:0 0 18px !important;
+.manage-generation-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 8px 4px;
+  cursor: pointer;
 }
 
-.member-check .member-color-icon {
-  width:15px !important;
-  height:15px !important;
-  min-width:15px !important;
-  max-width:15px !important;
-  border-radius:50%;
-  flex:0 0 15px !important;
+.manage-generation-arrow {
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
 }
 
-.member-name-text {
-  flex:1;
-  min-width:0;
-  word-break:keep-all;
+.manage-generation-name {
+  flex: 1;
+}
+
+.manage-member-list {
+  padding-left: 24px;
+}
+
+.manage-member-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  width: 100%;
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.manage-member-row input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  flex: 0 0 18px !important;
+}
+
+.manage-member-row .member-color-icon {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+  max-width: 15px !important;
+  border-radius: 50%;
+  flex: 0 0 15px !important;
+}
+
+.manage-member-name {
+  flex: 1;
+  min-width: 0;
+  word-break: keep-all;
 }
 
 #manageOverlay {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.3);
-  display:none;
-  z-index:2500;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: none;
+  z-index: 2500;
 }
 
 /* テンプレ管理 */
 .template-help {
-  font-size:12px;
-  color:#666;
-  background:#f7f7f7;
-  padding:8px;
-  border-radius:8px;
-  line-height:1.6;
+  font-size: 12px;
+  color: #666;
+  background: #f7f7f7;
+  padding: 8px;
+  border-radius: 8px;
+  line-height: 1.6;
 }
 
 .template-item {
-  border:1px solid #ddd;
-  border-radius:8px;
-  padding:8px;
-  margin:8px 0;
-  background:#fafafa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 8px;
+  margin: 8px 0;
+  background: #fafafa;
 }
 
 .template-title {
-  font-weight:bold;
-  font-size:14px;
-  margin-bottom:6px;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 6px;
 }
 
 .template-actions {
-  display:flex;
-  gap:6px;
+  display: flex;
+  gap: 6px;
 }
 
 .template-actions button {
-  width:50%;
-  padding:7px;
-  font-size:13px;
+  width: 50%;
+  padding: 7px;
+  font-size: 13px;
 }
 
 /* 出品テンプレ選択モーダル */
 #templateOverlay {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.35);
-  display:none;
-  z-index:3500;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: none;
+  z-index: 3500;
 }
 
 #templateModal {
-  position:fixed;
-  left:50%;
-  top:50%;
-  transform:translate(-50%, -50%);
-  width:300px;
-  max-height:80vh;
-  overflow:auto;
-  background:#fff;
-  border-radius:14px;
-  padding:14px;
-  display:none;
-  z-index:4000;
-  box-shadow:0 8px 30px rgba(0,0,0,0.25);
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  max-height: 80vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px;
+  display: none;
+  z-index: 4000;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
 }
 
 #templateModal h3 {
-  margin:4px 0 12px;
-  text-align:center;
-  font-size:18px;
+  margin: 4px 0 12px;
+  text-align: center;
+  font-size: 18px;
 }
 
 #templateModal button {
-  width:100%;
-  padding:12px;
-  margin:6px 0;
-  border-radius:10px;
-  border:1px solid #ccc;
-  background:#f7f7f7;
-  font-size:15px;
+  width: 100%;
+  padding: 12px;
+  margin: 6px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #f7f7f7;
+  font-size: 15px;
 }
 
 #templateModal .cancel-btn {
-  background:#eee;
-  color:#555;
+  background: #eee;
+  color: #555;
 }
 
-@media (max-width:600px){
+@media (max-width: 600px) {
   .list {
-    grid-template-columns:repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  #side {
-    width:320px;
+  #side,
+  #managePanel {
+    width: 320px;
   }
 }
 </style>
@@ -526,6 +558,20 @@ body {
 </div>
 
 <script>
+const memberAliases = {
+  "鈴木佑奈": "鈴木佑捺",
+  "鈴木佑捺": "鈴木佑捺",
+  "鈴木佑捺": "鈴木佑捺",
+
+  "海邊朱莉": "海邉朱莉",
+  "海邉朱莉": "海邉朱莉",
+
+  "川崎桜": "川﨑桜",
+  "川﨑桜": "川﨑桜",
+
+  "菅原咲月": "菅原咲月"
+};
+
 const memberColors = {
   "伊藤理々杏": ["#800080", "#ff0000"],
   "岩本蓮加": ["#ff69b4", "#ff0000"],
@@ -570,10 +616,55 @@ const memberColors = {
   "矢田萌華": ["#ffffff", "#800080"]
 };
 
+const memberGenerations = {
+  "伊藤理々杏": "3期生",
+  "岩本蓮加": "3期生",
+  "梅澤美波": "3期生",
+  "吉田綾乃クリスティー": "3期生",
+
+  "遠藤さくら": "4期生",
+  "賀喜遥香": "4期生",
+  "金川紗耶": "4期生",
+  "黒見明香": "4期生",
+  "佐藤璃果": "4期生",
+  "柴田柚菜": "4期生",
+  "田村真佑": "4期生",
+  "筒井あやめ": "4期生",
+  "林瑠奈": "4期生",
+  "松尾美佑": "4期生",
+  "矢久保美緒": "4期生",
+  "弓木奈於": "4期生",
+
+  "五百城茉央": "5期生",
+  "池田瑛紗": "5期生",
+  "一ノ瀬美空": "5期生",
+  "井上和": "5期生",
+  "岡本姫奈": "5期生",
+  "小川彩": "5期生",
+  "奥田いろは": "5期生",
+  "川﨑桜": "5期生",
+  "菅原咲月": "5期生",
+  "冨里奈央": "5期生",
+  "中西アルノ": "5期生",
+
+  "愛宕心響": "6期生",
+  "大越ひなの": "6期生",
+  "小津玲奈": "6期生",
+  "海邉朱莉": "6期生",
+  "川端晃菜": "6期生",
+  "鈴木佑捺": "6期生",
+  "瀬戸口心月": "6期生",
+  "長嶋凛桜": "6期生",
+  "増田三莉音": "6期生",
+  "森平麗心": "6期生",
+  "矢田萌華": "6期生"
+};
+
 let items = JSON.parse(localStorage.getItem("items") || "[]");
 let members = JSON.parse(localStorage.getItem("members") || "[]");
 let openedSeries = JSON.parse(localStorage.getItem("openedSeries") || "{}");
 let openedGeneration = JSON.parse(localStorage.getItem("openedGeneration") || "{}");
+let openedManageGeneration = JSON.parse(localStorage.getItem("openedManageGeneration") || "{}");
 let listingTemplates = JSON.parse(localStorage.getItem("listingTemplates") || "[]");
 
 let currentMember = "all";
@@ -582,66 +673,134 @@ let currentGeneration = "all";
 let listingTargetIndex = null;
 let editingTemplateIndex = null;
 
-items.forEach(item => {
-  if(item.memo === undefined) item.memo = "";
-  if(item.generation === undefined) item.generation = "未設定";
-  if(item.mercariPrice === undefined) item.mercariPrice = "";
-});
+function normalizeName(name) {
+  let cleaned = String(name || "")
+    .replace(/\s/g, "")
+    .replace(/　/g, "")
+    .replace(/\u200B/g, "")
+    .replace(/\uFEFF/g, "")
+    .replace(/\u00A0/g, "")
+    .trim();
 
-if(listingTemplates.length === 0){
-  listingTemplates = [
-    {
-      name:"新品・未使用",
-      title:"{name} {series} 缶バッジ",
-      body:"乃木坂46 {name}\n{series} 缶バッジです。\n\n新品・未使用品です。\n初期傷等を気にされる方はご遠慮ください。\n\n即購入可能です。"
-    },
-    {
-      name:"中古・目立った傷なし",
-      title:"{name} {series} 缶バッジ",
-      body:"乃木坂46 {name}\n{series} 缶バッジです。\n\n目立った傷はありませんが、一度人の手に渡ったものです。\n状態を細かく気にされる方はご遠慮ください。\n\n即購入可能です。"
-    },
-    {
-      name:"まとめ売り",
-      title:"乃木坂46 缶バッジ まとめ売り",
-      body:"乃木坂46の缶バッジまとめ売りです。\n\nバラ売り相談可能です。\n状態を細かく気にされる方はご遠慮ください。\n\n即購入可能です。"
-    }
-  ];
+  if (memberAliases[cleaned]) {
+    cleaned = memberAliases[cleaned];
+  }
+
+  /*
+    鈴木佑捺の表記ゆれ強制補正
+    鈴木佑奈 / 鈴木 佑捺 / 鈴木佑捺 / 見えない空白入り
+    ぜんぶ鈴木佑捺に統一
+  */
+  if (cleaned.startsWith("鈴木") && cleaned.includes("佑")) {
+    cleaned = "鈴木佑捺";
+  }
+
+  /*
+    海邉朱莉の表記ゆれ補正
+    海邊朱莉などを統一
+  */
+  if (cleaned.startsWith("海") && cleaned.includes("朱莉")) {
+    cleaned = "海邉朱莉";
+  }
+
+  /*
+    川﨑桜の表記ゆれ補正
+    川崎桜を統一
+  */
+  if (cleaned.startsWith("川") && cleaned.includes("桜")) {
+    cleaned = "川﨑桜";
+  }
+
+  return cleaned;
 }
 
-function save(){
+function save() {
   localStorage.setItem("items", JSON.stringify(items));
   localStorage.setItem("members", JSON.stringify(members));
   localStorage.setItem("openedSeries", JSON.stringify(openedSeries));
   localStorage.setItem("openedGeneration", JSON.stringify(openedGeneration));
+  localStorage.setItem("openedManageGeneration", JSON.stringify(openedManageGeneration));
   localStorage.setItem("listingTemplates", JSON.stringify(listingTemplates));
 }
 
-function getMemberColorIcon(name){
-  const colors = memberColors[name] || ["#dddddd", "#999999"];
+function fixSavedData() {
+  items.forEach(item => {
+    item.name = normalizeName(item.name);
+
+    if (item.memo === undefined) item.memo = "";
+    if (item.mercariPrice === undefined) item.mercariPrice = "";
+    if (!item.generation) item.generation = "未設定";
+
+    const fixedGeneration = memberGenerations[item.name];
+
+    if (fixedGeneration && item.generation === "未設定") {
+      item.generation = fixedGeneration;
+    }
+  });
+
+  members = members.map(m => normalizeName(m)).filter(m => m);
+  members = [...new Set(members)];
+
+  items.forEach(item => {
+    const n = normalizeName(item.name);
+    if (n && !members.includes(n)) {
+      members.push(n);
+    }
+  });
+
+  members = members.map(m => normalizeName(m)).filter(m => m);
+  members = [...new Set(members)];
+
+  save();
+}
+
+if (listingTemplates.length === 0) {
+  listingTemplates = [
+    {
+      name: "新品・未使用",
+      title: "{name} {series} 缶バッジ",
+      body: "乃木坂46 {name}\n{series} 缶バッジです。\n\n新品・未使用品です。\n初期傷等を気にされる方はご遠慮ください。\n\n即購入可能です。"
+    },
+    {
+      name: "中古・目立った傷なし",
+      title: "{name} {series} 缶バッジ",
+      body: "乃木坂46 {name}\n{series} 缶バッジです。\n\n目立った傷はありませんが、一度人の手に渡ったものです。\n状態を細かく気にされる方はご遠慮ください。\n\n即購入可能です。"
+    },
+    {
+      name: "まとめ売り",
+      title: "乃木坂46 缶バッジ まとめ売り",
+      body: "乃木坂46の缶バッジまとめ売りです。\n\nバラ売り相談可能です。\n状態を細かく気にされる方はご遠慮ください。\n\n即購入可能です。"
+    }
+  ];
+}
+
+function getMemberColorIcon(name) {
+  const key = normalizeName(name);
+  const colors = memberColors[key] || ["#dddddd", "#999999"];
 
   return `
     <span
       class="member-color-icon"
-      style="background:linear-gradient(90deg, ${colors[0]} 0%, ${colors[0]} 50%, ${colors[1]} 50%, ${colors[1]} 100%);"
+      style="background: linear-gradient(90deg, ${colors[0]} 0%, ${colors[0]} 50%, ${colors[1]} 50%, ${colors[1]} 100%);"
     ></span>
   `;
 }
 
-function toggleMenu(){
+function toggleMenu() {
   managePanel.style.right = "-330px";
   manageOverlay.style.display = "none";
 
-  if(side.style.left === "0px"){
+  if (side.style.left === "0px") {
     side.style.left = "-320px";
     overlay.style.display = "none";
-  }else{
+  } else {
     side.style.left = "0px";
     overlay.style.display = "block";
     renderMenu();
   }
 }
 
-function renderMenu(){
+function renderMenu() {
   let html = "<h3>メニュー</h3>";
 
   html += `
@@ -655,7 +814,6 @@ function renderMenu(){
   seriesList.forEach(s => {
     const safeSeries = escapeText(s);
     const isSeriesOpen = openedSeries[s] !== false;
-
     const seriesItems = items.filter(i => i.series === s);
     const seriesTotalCount = seriesItems.reduce((sum, item) => sum + Number(item.count || 0), 0);
 
@@ -673,7 +831,7 @@ function renderMenu(){
       </div>
     `;
 
-    if(isSeriesOpen){
+    if (isSeriesOpen) {
       const generations = [...new Set(seriesItems.map(i => i.generation || "未設定"))];
 
       generations.forEach(g => {
@@ -699,7 +857,7 @@ function renderMenu(){
           </div>
         `;
 
-        if(isGenOpen){
+        if (isGenOpen) {
           genItems.forEach(item => {
             html += `
               <div class="side-member-row" onclick="selectMenu('${escapeText(item.name)}','${escapeText(item.series)}','${escapeText(item.generation || "未設定")}')">
@@ -720,19 +878,19 @@ function renderMenu(){
   side.innerHTML = html;
 }
 
-function toggleSeriesTree(seriesName){
+function toggleSeriesTree(seriesName) {
   openedSeries[seriesName] = openedSeries[seriesName] === false ? true : false;
   save();
   renderMenu();
 }
 
-function toggleGenerationTree(key){
+function toggleGenerationTree(key) {
   openedGeneration[key] = openedGeneration[key] === false ? true : false;
   save();
   renderMenu();
 }
 
-function selectMenu(m, s, g){
+function selectMenu(m, s, g) {
   currentMember = m;
   currentSeries = s;
   currentGeneration = g;
@@ -740,14 +898,14 @@ function selectMenu(m, s, g){
   render();
 }
 
-function toggleManage(){
+function toggleManage() {
   side.style.left = "-320px";
   overlay.style.display = "none";
 
-  if(managePanel.style.right === "0px"){
+  if (managePanel.style.right === "0px") {
     managePanel.style.right = "-330px";
     manageOverlay.style.display = "none";
-  }else{
+  } else {
     managePanel.style.right = "0px";
     manageOverlay.style.display = "block";
     renderMembers();
@@ -755,11 +913,11 @@ function toggleManage(){
   }
 }
 
-function addMember(){
-  const m = newMember.value.trim();
-  if(!m) return;
+function addMember() {
+  const m = normalizeName(newMember.value);
+  if (!m) return;
 
-  if(!members.includes(m)){
+  if (!members.includes(m)) {
     members.push(m);
   }
 
@@ -768,87 +926,129 @@ function addMember(){
   renderMembers();
 }
 
-function renderMembers(){
+function toggleManageGeneration(gen) {
+  openedManageGeneration[gen] = openedManageGeneration[gen] === false ? true : false;
+  save();
+  renderMembers();
+}
+
+function renderMembers() {
   memberList.innerHTML = "";
 
+  const generationOrder = ["3期生", "4期生", "5期生", "6期生", "未設定"];
+  const grouped = {};
+
   members.forEach(m => {
-    memberList.innerHTML += `
-      <label class="member-check">
-        <input type="checkbox" value="${escapeHTML(m)}">
-        ${getMemberColorIcon(m)}
-        <span class="member-name-text">${escapeHTML(m)}</span>
-      </label>
+    const key = normalizeName(m);
+    const gen = memberGenerations[key] || "未設定";
+
+    if (!grouped[gen]) grouped[gen] = [];
+    grouped[gen].push(key);
+  });
+
+  generationOrder.forEach(gen => {
+    const genMembers = grouped[gen] || [];
+    if (genMembers.length === 0) return;
+
+    const isOpen = openedManageGeneration[gen] !== false;
+
+    let html = `
+      <div class="manage-generation-block">
+        <div class="manage-generation-head" onclick="toggleManageGeneration('${escapeText(gen)}')">
+          <div class="manage-generation-arrow">${isOpen ? "▼" : "▶"}</div>
+          <div class="manage-generation-name">${escapeHTML(gen)}</div>
+        </div>
     `;
+
+    if (isOpen) {
+      html += `<div class="manage-member-list">`;
+
+      genMembers.forEach(m => {
+        html += `
+          <label class="manage-member-row">
+            <input type="checkbox" value="${escapeHTML(m)}">
+            ${getMemberColorIcon(m)}
+            <span class="manage-member-name">${escapeHTML(m)}</span>
+          </label>
+        `;
+      });
+
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+    memberList.innerHTML += html;
   });
 }
 
-function addItem(){
+function addItem() {
   const s = series.value.trim();
   const g = generation.value.trim() || "未設定";
 
-  if(!s) return;
+  if (!s) return;
 
   const checked = document.querySelectorAll("#memberList input:checked");
 
-  if(checked.length === 0){
+  if (checked.length === 0) {
     alert("メンバーを選択して");
     return;
   }
 
   checked.forEach(cb => {
-    const m = cb.value;
+    const m = normalizeName(cb.value);
 
-    if(!items.some(i => i.name === m && i.series === s && (i.generation || "未設定") === g)){
+    if (!items.some(i => normalizeName(i.name) === m && i.series === s && (i.generation || "未設定") === g)) {
       items.push({
-        name:m,
-        series:s,
-        generation:g,
-        count:0,
-        mercariPrice:"",
-        memo:""
+        name: m,
+        series: s,
+        generation: g,
+        count: 0,
+        mercariPrice: "",
+        memo: ""
       });
+    }
+
+    if (!members.includes(m)) {
+      members.push(m);
     }
   });
 
-  if(openedSeries[s] === undefined) openedSeries[s] = true;
+  if (openedSeries[s] === undefined) openedSeries[s] = true;
 
   const genKey = s + "___" + g;
-  if(openedGeneration[genKey] === undefined) openedGeneration[genKey] = true;
+  if (openedGeneration[genKey] === undefined) openedGeneration[genKey] = true;
 
-  save();
+  fixSavedData();
   render();
   renderMembers();
 
-  if(side.style.left === "0px") renderMenu();
+  if (side.style.left === "0px") renderMenu();
 }
 
-function changeCount(i, d){
+function changeCount(i, d) {
   items[i].count += d;
-
-  if(items[i].count < 0){
-    items[i].count = 0;
-  }
+  if (items[i].count < 0) items[i].count = 0;
 
   save();
   render();
 
-  if(side.style.left === "0px") renderMenu();
+  if (side.style.left === "0px") renderMenu();
 }
 
-function updateMercariPrice(i, value){
+function updateMercariPrice(i, value) {
   items[i].mercariPrice = value;
   save();
 }
 
-function render(){
+function render() {
   list.innerHTML = "";
 
   items.forEach((item, i) => {
     const gen = item.generation || "未設定";
 
-    if(currentMember !== "all" && item.name !== currentMember) return;
-    if(currentSeries !== "all" && item.series !== currentSeries) return;
-    if(currentGeneration !== "all" && gen !== currentGeneration) return;
+    if (currentMember !== "all" && item.name !== currentMember) return;
+    if (currentSeries !== "all" && item.series !== currentSeries) return;
+    if (currentGeneration !== "all" && gen !== currentGeneration) return;
 
     const memoHTML = item.memo && item.memo.trim()
       ? `<div class="memo">メモ：${escapeHTML(item.memo)}</div>`
@@ -864,9 +1064,9 @@ function render(){
         <div class="sub">${escapeHTML(item.series)} / ${escapeHTML(gen)}</div>
 
         <div class="counter-box">
-          <button onclick="changeCount(${i},-1)">−</button>
+          <button onclick="changeCount(${i}, -1)">−</button>
           <b>${item.count}</b>
-          <button onclick="changeCount(${i},1)">＋</button>
+          <button onclick="changeCount(${i}, 1)">＋</button>
         </div>
 
         <input
@@ -893,28 +1093,28 @@ function render(){
   });
 }
 
-function openMercari(i){
+function openMercari(i) {
   const item = items[i];
   const keyword = `${item.name} ${item.series} 缶バッジ`;
   const url = "https://jp.mercari.com/search?keyword=" + encodeURIComponent(keyword);
   window.open(url, "_blank");
 }
 
-function openListingTemplate(i){
+function openListingTemplate(i) {
   listingTargetIndex = i;
   renderTemplateSelectList();
   templateOverlay.style.display = "block";
   templateModal.style.display = "block";
 }
 
-function closeTemplateModal(){
+function closeTemplateModal() {
   listingTargetIndex = null;
   templateOverlay.style.display = "none";
   templateModal.style.display = "none";
 }
 
-function renderTemplateSelectList(){
-  if(listingTemplates.length === 0){
+function renderTemplateSelectList() {
+  if (listingTemplates.length === 0) {
     templateSelectList.innerHTML = `<p style="text-align:center;color:#666;">テンプレがありません</p>`;
     return;
   }
@@ -932,8 +1132,8 @@ function renderTemplateSelectList(){
   templateSelectList.innerHTML = html;
 }
 
-function useListingTemplate(templateIndex){
-  if(listingTargetIndex === null) return;
+function useListingTemplate(templateIndex) {
+  if (listingTargetIndex === null) return;
 
   const item = items[listingTargetIndex];
   const template = listingTemplates[templateIndex];
@@ -941,21 +1141,16 @@ function useListingTemplate(templateIndex){
   const title = applyTemplate(template.title, item);
   const body = applyTemplate(template.body, item);
 
-  const copyText =
-`${title}
-
-${body}`;
-
+  const copyText = `${title}\n\n${body}`;
   copyToClipboard(copyText);
 
   closeTemplateModal();
 
   alert("出品用タイトル・説明文をコピーしました。メルカリ出品画面を開きます。");
-
   window.open("https://jp.mercari.com/sell", "_blank");
 }
 
-function applyTemplate(text, item){
+function applyTemplate(text, item) {
   return String(text || "")
     .replaceAll("{name}", item.name || "")
     .replaceAll("{series}", item.series || "")
@@ -965,17 +1160,17 @@ function applyTemplate(text, item){
     .replaceAll("{memo}", item.memo || "");
 }
 
-function copyToClipboard(text){
-  if(navigator.clipboard && navigator.clipboard.writeText){
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).catch(() => {
       fallbackCopy(text);
     });
-  }else{
+  } else {
     fallbackCopy(text);
   }
 }
 
-function fallbackCopy(text){
+function fallbackCopy(text) {
   const textarea = document.createElement("textarea");
   textarea.value = text;
   document.body.appendChild(textarea);
@@ -984,21 +1179,21 @@ function fallbackCopy(text){
   document.body.removeChild(textarea);
 }
 
-function saveTemplate(){
+function saveTemplate() {
   const name = templateName.value.trim();
   const title = templateTitle.value.trim();
   const body = templateBody.value.trim();
 
-  if(!name || !title || !body){
+  if (!name || !title || !body) {
     alert("テンプレ名・タイトル・説明文を入力して");
     return;
   }
 
   const data = { name, title, body };
 
-  if(editingTemplateIndex === null){
+  if (editingTemplateIndex === null) {
     listingTemplates.push(data);
-  }else{
+  } else {
     listingTemplates[editingTemplateIndex] = data;
     editingTemplateIndex = null;
   }
@@ -1011,8 +1206,8 @@ function saveTemplate(){
   renderTemplates();
 }
 
-function renderTemplates(){
-  if(listingTemplates.length === 0){
+function renderTemplates() {
+  if (listingTemplates.length === 0) {
     templateList.innerHTML = `<p style="font-size:12px;color:#666;">テンプレがありません</p>`;
     return;
   }
@@ -1035,7 +1230,7 @@ function renderTemplates(){
   templateList.innerHTML = html;
 }
 
-function editTemplate(index){
+function editTemplate(index) {
   const t = listingTemplates[index];
 
   templateName.value = t.name;
@@ -1047,82 +1242,81 @@ function editTemplate(index){
   alert("下の入力欄にテンプレを読み込みました。修正して「テンプレ保存」を押してください。");
 }
 
-function deleteTemplate(index){
-  if(!confirm("このテンプレを削除しますか？")) return;
+function deleteTemplate(index) {
+  if (!confirm("このテンプレを削除しますか？")) return;
 
   listingTemplates.splice(index, 1);
   save();
   renderTemplates();
 }
 
-function editItem(i){
+function editItem(i) {
   const item = items[i];
 
   const newName = prompt("メンバー名", item.name);
-  if(newName === null) return;
+  if (newName === null) return;
 
   const newSeries = prompt("シリーズ名", item.series);
-  if(newSeries === null) return;
+  if (newSeries === null) return;
 
   const newGeneration = prompt("期生", item.generation || "未設定");
-  if(newGeneration === null) return;
+  if (newGeneration === null) return;
 
   const newMemo = prompt("メモ", item.memo || "");
-  if(newMemo === null) return;
+  if (newMemo === null) return;
 
-  if(!newName.trim() || !newSeries.trim()){
+  if (!newName.trim() || !newSeries.trim()) {
     alert("メンバー名とシリーズ名は空欄にできません");
     return;
   }
 
   const oldName = item.name;
 
-  item.name = newName.trim();
+  item.name = normalizeName(newName);
   item.series = newSeries.trim();
   item.generation = newGeneration.trim() || "未設定";
   item.memo = newMemo.trim();
 
-  if(!members.includes(item.name)){
+  if (!members.includes(item.name)) {
     members.push(item.name);
   }
 
   const stillExists = items.some(x => x.name === oldName);
-  if(!stillExists){
+  if (!stillExists) {
     members = members.filter(x => x !== oldName);
   }
 
-  if(openedSeries[item.series] === undefined) openedSeries[item.series] = true;
+  if (openedSeries[item.series] === undefined) openedSeries[item.series] = true;
 
   const genKey = item.series + "___" + item.generation;
-  if(openedGeneration[genKey] === undefined) openedGeneration[genKey] = true;
+  if (openedGeneration[genKey] === undefined) openedGeneration[genKey] = true;
 
-  save();
+  fixSavedData();
   render();
 
-  if(side.style.left === "0px") renderMenu();
+  if (side.style.left === "0px") renderMenu();
 }
 
-function deleteItem(i){
-  if(!confirm("このデータを削除しますか？")) return;
+function deleteItem(i) {
+  if (!confirm("このデータを削除しますか？")) return;
 
   const oldName = items[i].name;
-
   items.splice(i, 1);
 
   const stillExists = items.some(x => x.name === oldName);
-  if(!stillExists){
+  if (!stillExists) {
     members = members.filter(x => x !== oldName);
   }
 
   save();
   render();
 
-  if(side.style.left === "0px") renderMenu();
+  if (side.style.left === "0px") renderMenu();
 }
 
-function importCSV(){
+function importCSV() {
   const f = csv.files[0];
-  if(!f) return;
+  if (!f) return;
 
   const r = new FileReader();
 
@@ -1130,10 +1324,10 @@ function importCSV(){
     const lines = e.target.result.split(/\r?\n/);
 
     lines.forEach((line, index) => {
-      if(!line.trim()) return;
+      if (!line.trim()) return;
 
       const cols = parseCSVLine(line);
-      if(cols.length < 2) return;
+      if (cols.length < 2) return;
 
       let n = "";
       let s = "";
@@ -1142,28 +1336,28 @@ function importCSV(){
       let price = "";
       let memo = "";
 
-      if(index === 0 && line.includes("メンバー")) return;
+      if (index === 0 && line.includes("メンバー")) return;
 
-      n = (cols[0] || "").trim();
+      n = normalizeName(cols[0] || "");
       s = (cols[1] || "").trim();
 
-      if(cols.length >= 6){
+      if (cols.length >= 6) {
         g = (cols[2] || "").trim() || "未設定";
         c = Number((cols[3] || "0").trim());
         price = (cols[4] || "").trim();
         memo = (cols[5] || "").trim();
-      }else if(cols.length === 5){
+      } else if (cols.length === 5) {
         g = (cols[2] || "").trim() || "未設定";
         c = Number((cols[3] || "0").trim());
         price = "";
         memo = (cols[4] || "").trim();
-      }else{
-        if(!isNaN(Number((cols[2] || "").trim()))){
+      } else {
+        if (!isNaN(Number((cols[2] || "").trim()))) {
           g = "未設定";
           c = Number((cols[2] || "0").trim());
           price = "";
           memo = (cols[3] || "").trim();
-        }else{
+        } else {
           g = (cols[2] || "").trim() || "未設定";
           c = 0;
           price = "";
@@ -1171,44 +1365,46 @@ function importCSV(){
         }
       }
 
-      if(!n || !s) return;
-      if(isNaN(c) || c < 0) c = 0;
+      if (!n || !s) return;
+      if (isNaN(c) || c < 0) c = 0;
 
-      if(!members.includes(n)){
+      if (!members.includes(n)) {
         members.push(n);
       }
 
       const existing = items.find(i =>
-        i.name === n &&
+        normalizeName(i.name) === n &&
         i.series === s &&
         (i.generation || "未設定") === g
       );
 
-      if(existing){
+      if (existing) {
+        existing.name = n;
         existing.count = c;
         existing.mercariPrice = price;
         existing.memo = memo;
-      }else{
+      } else {
         items.push({
-          name:n,
-          series:s,
-          generation:g,
-          count:c,
-          mercariPrice:price,
-          memo:memo
+          name: n,
+          series: s,
+          generation: g,
+          count: c,
+          mercariPrice: price,
+          memo: memo
         });
       }
 
-      if(openedSeries[s] === undefined) openedSeries[s] = true;
+      if (openedSeries[s] === undefined) openedSeries[s] = true;
 
       const genKey = s + "___" + g;
-      if(openedGeneration[genKey] === undefined) openedGeneration[genKey] = true;
+      if (openedGeneration[genKey] === undefined) openedGeneration[genKey] = true;
     });
 
-    save();
+    fixSavedData();
     render();
+    renderMembers();
 
-    if(side.style.left === "0px") renderMenu();
+    if (side.style.left === "0px") renderMenu();
 
     alert("CSVを読み込みました");
   };
@@ -1216,8 +1412,8 @@ function importCSV(){
   r.readAsText(f);
 }
 
-function exportCSV(){
-  if(items.length === 0){
+function exportCSV() {
+  if (items.length === 0) {
     alert("書き出すデータがありません");
     return;
   }
@@ -1252,7 +1448,7 @@ function exportCSV(){
   URL.revokeObjectURL(url);
 }
 
-function makeCSVFileName(){
+function makeCSVFileName() {
   const now = new Date();
 
   const y = now.getFullYear();
@@ -1264,35 +1460,35 @@ function makeCSVFileName(){
   return `缶バッジ管理_${y}${m}${d}_${h}${min}.csv`;
 }
 
-function escapeCSV(value){
+function escapeCSV(value) {
   value = String(value ?? "");
 
-  if(value.includes(",") || value.includes('"') || value.includes("\n")){
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
     value = '"' + value.replace(/"/g, '""') + '"';
   }
 
   return value;
 }
 
-function parseCSVLine(line){
+function parseCSVLine(line) {
   const result = [];
   let current = "";
   let inQuotes = false;
 
-  for(let i = 0; i < line.length; i++){
+  for (let i = 0; i < line.length; i++) {
     const ch = line[i];
 
-    if(ch === '"'){
-      if(inQuotes && line[i + 1] === '"'){
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
         current += '"';
         i++;
-      }else{
+      } else {
         inQuotes = !inQuotes;
       }
-    }else if(ch === "," && !inQuotes){
+    } else if (ch === "," && !inQuotes) {
       result.push(current);
       current = "";
-    }else{
+    } else {
       current += ch;
     }
   }
@@ -1301,13 +1497,13 @@ function parseCSVLine(line){
   return result;
 }
 
-function escapeText(text){
+function escapeText(text) {
   return String(text)
     .replace(/\\/g, "\\\\")
     .replace(/'/g, "\\'");
 }
 
-function escapeHTML(text){
+function escapeHTML(text) {
   return String(text ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -1316,22 +1512,24 @@ function escapeHTML(text){
     .replace(/'/g, "&#039;");
 }
 
-function reset(){
-  if(!confirm("全部削除しますか？")) return;
-  if(!confirm("元に戻せません。本当に削除しますか？")) return;
+function reset() {
+  if (!confirm("全部削除しますか？")) return;
+  if (!confirm("元に戻せません。本当に削除しますか？")) return;
 
   items = [];
   members = [];
   openedSeries = {};
   openedGeneration = {};
+  openedManageGeneration = {};
 
   save();
   render();
+  renderMembers();
 
-  if(side.style.left === "0px") renderMenu();
+  if (side.style.left === "0px") renderMenu();
 }
 
-save();
+fixSavedData();
 render();
 </script>
 
